@@ -5,8 +5,18 @@ const AudioPlayer = ({ fileObject }) => {
   const src = fileObject.src;
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(50);
+  const [audio, setAudio] = useState(null);
 
-  let audio = new Audio(src);
+  useEffect(() => {
+    const audioInstance = new Audio(src);
+    setAudio(audioInstance);
+
+    // Clean up the audio instance when the component is unmounted
+    return () => {
+      audioInstance.pause();
+      setAudio(null);
+    };
+  }, [src]);
 
   const handlePlay = () => {
     setIsPlaying(true);
@@ -20,13 +30,15 @@ const AudioPlayer = ({ fileObject }) => {
 
   const handleVolumeChange = (value) => {
     setVolume(value);
-    audio.volume = value / 100;
+    if (audio) {
+      audio.volume = value / 100;
+    }
   };
 
   return (
     <HStack w="400px">
-      <VStack w="full">
-        <Text noOfLines={1} w="full" textAlign="left">{fileObject.file.name}</Text>
+      <VStack w="75%" alignItems="start">
+        <Text noOfLines={1} w="full" textAlign="left" color="white">{fileObject.file.name}</Text>
         <Slider
           aria-label="volume slider"
           defaultValue={volume}
@@ -39,6 +51,8 @@ const AudioPlayer = ({ fileObject }) => {
           </SliderTrack>
           <SliderThumb />
         </Slider>
+      </VStack>
+      <VStack w="25%" spacing={4}> {/* Remaining space for the button. Adjust width if needed */}
       </VStack>
       {isPlaying ? (
         <Button onClick={handlePause}>Pause</Button>
@@ -63,35 +77,42 @@ const FileDropper = () => {
     let files = [...e.dataTransfer.files].filter(file =>
       file.type.startsWith('audio/')
     );
-
+  
     files.forEach((file) => {
       const reader = new FileReader();
-
-      const loop = file.name.includes('loop')
+  
+      const loop = file.name.includes('loop');
       reader.onloadend = () => {
-
-        setDroppedFiles(prevState => [...prevState, {
-          file, src: reader.result,
-          loop
-        }].sort((a, b) => {
-          if (a.loop && !b.loop) return -1
-          if (!a.loop && b.loop) return 1
-          return 0
-        }).sort((a, b) => {
-          if (a.file.name < b.file.name) return -1
-          if (a.file.name > b.file.name) return 1
-          return 0
-        })
-        );
+        setDroppedFiles(prevState => [
+          ...prevState,
+          {
+            file, 
+            src: reader.result,
+            loop
+          }
+        ].sort((a, b) => {
+          if (a.loop && !b.loop) return -1;
+          if (!a.loop && b.loop) return 1;
+          if (a.file.name < b.file.name) return -1;
+          if (a.file.name > b.file.name) return 1;
+          return 0;
+        }));
       };
       reader.readAsDataURL(file);
     });
   };
+  
   const listDroppedFiles = () => {
-    return droppedFiles.map((fileObject, index) => (
-      <VStack bg={
-        fileObject.loop ? 'blue.700' : 'gray.700'
-      } key={index} p={5} shadow="lg" rounded="lg" border="1px solid" borderColor="gray.500">
+    return droppedFiles.map((fileObject) => (
+      <VStack 
+        bg={fileObject.loop ? 'blue.700' : 'gray.700'}
+        key={`${fileObject.file.name}-${fileObject.file.lastModified}`} // more stable key
+        p={5} 
+        shadow="lg" 
+        rounded="lg" 
+        border="1px solid" 
+        borderColor="gray.500"
+      >
         <AudioPlayer fileObject={fileObject} />
       </VStack>
     ));
