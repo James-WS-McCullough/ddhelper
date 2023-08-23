@@ -23,10 +23,10 @@ const ImageViewer = ({ fileObject, isSelected, onClick }) => {
   );
 };
 
-const ImageDropper = () => {
+const ImageDropper = ({ setSrc, handlePopup, popupRef }) => {
   const [droppedImages, setDroppedImages] = useState([]);
-  const [selectedImage, setSelectedImage] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
   const toast = useToast();
 
   const handleDragOver = (e) => {
@@ -64,36 +64,12 @@ const ImageDropper = () => {
     setSelectedImage(index);
   };
 
-  const popupRef = useRef(null);
-
-  const handleOpenPopup = () => {
-    if (selectedImage !== null) {
-      localStorage.setItem('selectedImageSrc', droppedImages[selectedImage].src);
-  
-      // Check if the popup is already open, otherwise create it
-      if (!popupRef.current || popupRef.current.closed) {
-        popupRef.current = window.open("/popup", "Image Viewer", "width=600,height=400");
-      }
-    } else {
-      alert("Please select an image first");
-    }
-  };
-
   useEffect(() => {
-    if (popupRef.current && !popupRef.current.closed && selectedImage !== null) {
+    if (popupRef && popupRef.current && !popupRef.current.closed && selectedImage !== null && droppedImages[selectedImage]) {
       const newSrc = droppedImages[selectedImage].src;
-      popupRef.current.postMessage({ src: newSrc }, "*");
+      setSrc(newSrc)
     }
-  }, [selectedImage]);
-  
-
-  // useEffect(() => {
-  //   if (popupRef.current) {
-  //     popupRef.current.addEventListener('beforeunload', () => {
-  //       popupRef.current = null;
-  //     });
-  //   }
-  // }, []);
+  }, [selectedImage, droppedImages]);
 
   const listDroppedImages = () => (
     <SimpleGrid columns={3} spacing={4}>
@@ -124,7 +100,7 @@ const ImageDropper = () => {
       flexDirection="column"
       textAlign="center"
     >
-       <Button onClick={handleOpenPopup}>View Selected Image in Popup</Button>
+       <Button onClick={handlePopup}>View Selected Image in Popup</Button>
 
       {droppedImages.length === 0 ? (
         <span>Drop your image files here:</span>
