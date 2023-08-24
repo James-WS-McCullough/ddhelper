@@ -25,8 +25,11 @@ export default function Home2() {
     useEffect(() => {
         if (popupWindow) {
             // Prepare the image sources
-            const locationSrc = selectedLocation !== null ? droppedImages[selectedLocation].src : null;
-            const portraitsSrcs = selectedPortraits.map(index => droppedImages[index].src);
+            const locationImages = droppedImages.filter(img => img.file.name.includes('location'));
+            const portraitImages = droppedImages.filter(img => !img.file.name.includes('location'));
+
+            const locationSrc = selectedLocation !== null ? locationImages[selectedLocation].src : null;
+            const portraitsSrcs = selectedPortraits.map(index => portraitImages[index].src);
     
             // Now, every time scores, location, or portrait selections change, send the data to the popup
             const message = {
