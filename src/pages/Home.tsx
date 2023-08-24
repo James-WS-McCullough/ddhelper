@@ -7,29 +7,40 @@ import { useEffect, useState } from "react";
 export default function Home2() {
     const [scores, setScores] = useState([]); // An array to hold the scores
     const [popupWindow, setPopupWindow] = useState(null);
-    const [src, setSrc] = useState(null)
-    const [selectedImage, setSelectedImage] = useState(null);
+    const [selectedLocation, setSelectedLocation] = useState(null);
+    const [selectedPortraits, setSelectedPortraits] = useState([]);
+    const [droppedImages, setDroppedImages] = useState([]);
 
 
     const handlePopup = () => {
         if (!popupWindow || popupWindow.closed) {
             const win = window.open("/popup", "_blank", "toolbar=no,location=no,status=no,menubar=no");
             setPopupWindow(win);
-            setSelectedImage(null)
+            setSelectedLocation(null)
+            setSelectedPortraits([])
         }
     };
     
 
-useEffect(() => {
-    if (popupWindow) {
-        // Now, every time scores or the selectedImage changes, send the data to the popup
-        const message = {
-            type: "DATA_UPDATE",
-            data: { scores, src }
-        };
-        popupWindow.postMessage(message, "*");
-    }
-}, [scores, src, popupWindow]);
+    useEffect(() => {
+        if (popupWindow) {
+            // Prepare the image sources
+            const locationSrc = selectedLocation !== null ? droppedImages[selectedLocation].src : null;
+            const portraitsSrcs = selectedPortraits.map(index => droppedImages[index].src);
+    
+            // Now, every time scores, location, or portrait selections change, send the data to the popup
+            const message = {
+                type: "DATA_UPDATE",
+                data: {
+                    scores,
+                    locationSrc,
+                    portraitsSrcs
+                }
+            };
+            popupWindow.postMessage(message, "*");
+        }
+    }, [scores, selectedLocation, selectedPortraits, popupWindow]);
+    
 
 
     return (
@@ -50,7 +61,7 @@ useEffect(() => {
                     </Box>
     
                     <Box flex={1} p={3} overflow="hidden">
-                    <ImageDropper setSrc={setSrc} popupRef={popupWindow} selectedImage={selectedImage} setSelectedImage={setSelectedImage} />
+                    <ImageDropper selectedLocation={selectedLocation} setSelectedLocation={setSelectedLocation}  selectedPortraits={selectedPortraits} setSelectedPortraits={setSelectedPortraits} droppedImages={droppedImages} setDroppedImages={setDroppedImages} />
                     </Box>
                 </HStack>
             </VStack>

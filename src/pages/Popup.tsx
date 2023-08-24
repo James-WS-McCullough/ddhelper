@@ -3,17 +3,16 @@ import { Image, Box, SimpleGrid } from '@chakra-ui/react';
 import ScoreDisplay from './ScoreDisplay';
 
 const Popup = () => {
-  const [src, setSrc] = useState(null);
+  const [locationSrc, setLocationSrc] = useState(null);
+  const [portraitsSrcs, setPortraitsSrcs] = useState([]);
   const [receivedScores, setReceivedScores] = useState([]);
 
-useEffect(() => {
+  useEffect(() => {
     const handleMessage = (event) => {
         if (event.data.type === "DATA_UPDATE") {
             setReceivedScores(event.data.data.scores);
-            setSrc(event.data.data.src);
-        }
-        if (event.data.type === "imageUpdate") {
-          setSrc(event.data.data.src);
+            setLocationSrc(event.data.data.locationSrc);
+            setPortraitsSrcs(event.data.data.portraitsSrcs);
         }
     };
 
@@ -22,8 +21,22 @@ useEffect(() => {
 }, []);
 
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" height="100vh" width="100vw" backgroundColor="black">
-      <Image src={src} objectFit="contain" maxH="90%" maxW="90%" />
+    <Box 
+    w="100vw" 
+    h="100vh" 
+    bg={locationSrc ? `url(${locationSrc}) center/cover no-repeat` : 'black'}
+    position="relative" 
+    display="flex"
+    alignItems="center"
+    justifyContent="center"
+>
+<SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} spacing={4} width="100%">
+                {portraitsSrcs.map((src, index) => (
+                    <Box key={index}>
+                        <img src={src} alt={`Portrait ${index}`} style={{ width: '100%', height: 'auto' }} />
+                    </Box>
+                ))}
+            </SimpleGrid>
       <Box 
     position={'absolute'} 
     display="flex"

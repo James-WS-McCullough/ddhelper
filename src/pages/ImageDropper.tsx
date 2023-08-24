@@ -1,83 +1,59 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  VStack, Box, Image, useToast, SimpleGrid,
-  Modal, ModalOverlay, ModalContent, ModalCloseButton, Button
+  VStack, Box, Image, useToast, SimpleGrid, Text
 } from '@chakra-ui/react';
 
-const ImageViewer = ({ fileObject, isSelected, onClick }) => {
-  return (
-    <Box
-      p={2}
-      border={isSelected ? '2px solid blue' : '1px solid gray'}
-      onClick={onClick}
-      cursor="pointer"
-      borderRadius="md"
-    >
-      <Image
-        src={fileObject.src}
-        alt={fileObject.file.name}
-        boxSize="100px"
-        objectFit="cover"
-      />
-    </Box>
-  );
-};
+const ImageViewer = ({ fileObject, isSelected, onClick }) => (
+  <Box
+    p={2}
+    border={isSelected ? '2px solid blue' : '1px solid gray'}
+    onClick={onClick}
+    cursor="pointer"
+    borderRadius="md"
+  >
+    <Image
+      src={fileObject.src}
+      alt={fileObject.file.name}
+      boxSize="100px"
+      objectFit="cover"
+    />
+  </Box>
+);
 
-const ImageDropper = ({ setSrc, popupRef, selectedImage, setSelectedImage }) => {
-  const [droppedImages, setDroppedImages] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+const ImageDropper = ({setSelectedPortraits, selectedPortraits, setSelectedLocation, selectedLocation, droppedImages, setDroppedImages}) => {
   const toast = useToast();
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
+  const locationImages = droppedImages.filter(img => img.file.name.includes('location'));
+  const portraitImages = droppedImages.filter(img => !img.file.name.includes('location'));
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    let files = [...e.dataTransfer.files].filter(file =>
-      file.type.startsWith('image/')
-    );
-
-    if (files.length > 0) {
-      files.forEach((file) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setDroppedImages(prevState => [...prevState, {
-            file, src: reader.result
-          }]);
-        };
-        reader.readAsDataURL(file);
-      });
+  const handleImageClick = (index, isLocation) => {
+    if (isLocation) {
+      setSelectedLocation(index);
+      return;
+    }
+    
+    if (selectedPortraits.includes(index)) {
+      setSelectedPortraits(selectedPortraits.filter(i => i !== index));
     } else {
-      toast({
-        title: "No image files found",
-        description: "Please drop valid image files.",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      });
+      setSelectedPortraits([...selectedPortraits, index]);
     }
   };
 
-  const handleImageClick = (index) => {
-    setSelectedImage(index);
+  const isImageSelected = (index, isLocation) => {
+    if (isLocation) {
+      return index === selectedLocation;
+    }
+    return selectedPortraits.includes(index);
   };
 
-  useEffect(() => {
-    if (popupRef && !popupRef.closed && selectedImage !== null && droppedImages[selectedImage]) {
-      const newSrc = droppedImages[selectedImage].src;
-      setSrc(newSrc)
-    }
-  }, [selectedImage, droppedImages]);
-
-  const listDroppedImages = () => (
+  const displayImages = (images, isLocation) => (
     <SimpleGrid columns={3} spacing={4}>
-      {droppedImages.map((fileObject, index) => (
+      {images.map((fileObject, index) => (
         <ImageViewer 
           key={index} 
           fileObject={fileObject}
-          isSelected={index === selectedImage}
-          onClick={() => handleImageClick(index)}
+          isSelected={isImageSelected(index, isLocation)}
+          onClick={() => handleImageClick(index, isLocation)}
         />
       ))}
     </SimpleGrid>
@@ -86,8 +62,28 @@ const ImageDropper = ({ setSrc, popupRef, selectedImage, setSelectedImage }) => 
   return (
     <VStack
       spacing={5}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
+      onDragOver={e => e.preventDefault()}
+      onDrop={e => {
+        e.preventDefault();
+        const files = [...e.dataTransfer.files].filter(file => file.type.startsWith('image/'));
+        if (files.length > 0) {
+          files.forEach((file) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              setDroppedImages(prev => [...prev, { file, src: reader.result }]);
+            };
+            reader.readAsDataURL(file);
+          });
+        } else {
+          toast({
+            title: "No image files found",
+            description: "Please drop valid image files.",
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+          });
+        }
+      }}
       borderWidth={2}
       borderRadius="md"
       p={4}
@@ -101,25 +97,22 @@ const ImageDropper = ({ setSrc, popupRef, selectedImage, setSelectedImage }) => 
     >
       {droppedImages.length === 0 ? (
         <span>Drop your image files here:</span>
-      ) : listDroppedImages()}
-
-      {/* Modal code */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="xl" isCentered>
-        <ModalOverlay bg="rgba(0, 0, 0, 0.8)" />
-        <ModalContent maxW="90%" m="1.5rem auto" bg="transparent" boxShadow="none">
-          {selectedImage !== null && (
-            <Image
-              src={droppedImages[selectedImage].src}
-              alt={droppedImages[selectedImage].file.name}
-              maxW="100%"
-              maxH="80vh"
-              objectFit="contain"
-            />
+      ) : (
+        <>
+          {locationImages.length > 0 && (
+            <>
+              <Text fontSize="xl" mb={4}>Location Images</Text>
+              {displayImages(locationImages, true)}
+            </>
           )}
-          <ModalCloseButton color="white" mt={4} />
-        </ModalContent>
-      </Modal>
-
+          {portraitImages.length > 0 && (
+            <>
+              <Text fontSize="xl" mt={locationImages.length > 0 ? 8 : 0} mb={4}>Portrait Images</Text>
+              {displayImages(portraitImages, false)}
+            </>
+          )}
+        </>
+      )}
     </VStack>
   );
 };
