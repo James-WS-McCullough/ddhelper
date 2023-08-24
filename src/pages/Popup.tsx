@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Image, Box } from '@chakra-ui/react';
+import { Image, Box, SimpleGrid } from '@chakra-ui/react';
 import ScoreDisplay from './ScoreDisplay';
 
 const Popup = () => {
-  const initialSrc = localStorage.getItem('selectedImageSrc');
-  const [src, setSrc] = useState(initialSrc);
+  const [src, setSrc] = useState(null);
   const [receivedScores, setReceivedScores] = useState([]);
 
 useEffect(() => {
@@ -24,17 +23,31 @@ useEffect(() => {
 
   return (
     <Box display="flex" justifyContent="center" alignItems="center" height="100vh" width="100vw" backgroundColor="black">
-      <Image src={src} alt="Selected" objectFit="contain" maxH="90%" maxW="90%" />
-      {
-        receivedScores.map(score => (
-          <ScoreDisplay 
-            key={score.name}
-            name={score.name} 
-            successes={score.successes} 
-            failures={score.failures} 
-          />
-        ))
-      }
+      <Image src={src} objectFit="contain" maxH="90%" maxW="90%" />
+      <Box 
+    position={'absolute'} 
+    display="flex"
+    flexWrap="wrap"
+    justifyContent={receivedScores.length === 1 ? "center" : "flex-start"}
+    width="100%"
+>
+  {
+    receivedScores.map(score => (
+      <Box 
+          key={score.name}
+          width={receivedScores.length === 1 ? "auto" : "50%"}
+          p={2} // this acts as spacing between the items
+      >
+        <ScoreDisplay 
+          name={score.name} 
+          successes={score.successes} 
+          failures={score.failures} 
+        />
+      </Box>
+    ))
+  }
+</Box>
+
     </Box>
   );
 };

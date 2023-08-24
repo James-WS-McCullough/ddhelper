@@ -1,14 +1,18 @@
 import { Box, Text } from "@chakra-ui/react";
 
 const ScoreBox = ({ color }) => (
-  <Box bg={color} w="30px" h="30px" m={1} borderRadius="5px"></Box>
+  <Box bg={color} w="60px" h="60px" m={1} borderRadius="15px" borderColor={"white"} borderWidth="1px"></Box>
 );
 
 const ScoreDisplay = ({ name, successes, failures }) => {
   return (
-    <Box position="absolute" top={5} left={5} zIndex={10}>
-      <Text fontSize="xl" fontWeight="bold">{name}</Text>
-      <Box display="flex">
+    <Box borderRadius="3px"
+    borderColor={"white"}
+    borderWidth="1px"
+    backgroundColor={"blackAlpha.600"}
+    paddingY="20px">
+      <Text fontSize="5xl" fontWeight="bold" textAlign={'center'} color={"white"}>{name}</Text>
+      <Box display="flex" marginX="20px">
         {[...Array(3 - failures)].map((_, idx) => (
           <ScoreBox key={`empty-failure-${idx}`} color="transparent" />
         ))}

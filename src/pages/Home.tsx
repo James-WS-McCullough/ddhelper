@@ -1,4 +1,4 @@
-import { Box, HStack, Heading, VStack } from "@chakra-ui/react";
+import { Box, Button, HStack, Heading, VStack } from "@chakra-ui/react";
 import FileDropper from "./FileDropper";
 import ImageDropper from "./ImageDropper";
 import ScoreInput from "./ScoreInput";
@@ -8,12 +8,17 @@ export default function Home2() {
     const [scores, setScores] = useState([]); // An array to hold the scores
     const [popupWindow, setPopupWindow] = useState(null);
     const [src, setSrc] = useState(null)
+    const [selectedImage, setSelectedImage] = useState(null);
 
 
-const handlePopup = () => {
-    const win = window.open("/popup", "_blank", "toolbar=no,location=no,status=no,menubar=no");
-    setPopupWindow(win);
-};
+    const handlePopup = () => {
+        if (!popupWindow || popupWindow.closed) {
+            const win = window.open("/popup", "_blank", "toolbar=no,location=no,status=no,menubar=no");
+            setPopupWindow(win);
+            setSelectedImage(null)
+        }
+    };
+    
 
 useEffect(() => {
     if (popupWindow) {
@@ -36,14 +41,16 @@ useEffect(() => {
         >
             <VStack spacing={5}>
                 <Heading>D&D HELPER</Heading>
-    
+                <HStack>
+                <Button onClick={handlePopup}>Open Popup</Button>
+                </HStack>
                 <HStack spacing={5} w="100%">
                     <Box flex={1} p={3} overflow="hidden">
                         <FileDropper />
                     </Box>
     
                     <Box flex={1} p={3} overflow="hidden">
-                    <ImageDropper setSrc={setSrc} handlePopup={handlePopup} popupRef={popupWindow} />
+                    <ImageDropper setSrc={setSrc} popupRef={popupWindow} selectedImage={selectedImage} setSelectedImage={setSelectedImage} />
                     </Box>
                 </HStack>
             </VStack>

@@ -23,10 +23,9 @@ const ImageViewer = ({ fileObject, isSelected, onClick }) => {
   );
 };
 
-const ImageDropper = ({ setSrc, handlePopup, popupRef }) => {
+const ImageDropper = ({ setSrc, popupRef, selectedImage, setSelectedImage }) => {
   const [droppedImages, setDroppedImages] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
   const toast = useToast();
 
   const handleDragOver = (e) => {
@@ -65,7 +64,7 @@ const ImageDropper = ({ setSrc, handlePopup, popupRef }) => {
   };
 
   useEffect(() => {
-    if (popupRef && popupRef.current && !popupRef.current.closed && selectedImage !== null && droppedImages[selectedImage]) {
+    if (popupRef && !popupRef.closed && selectedImage !== null && droppedImages[selectedImage]) {
       const newSrc = droppedImages[selectedImage].src;
       setSrc(newSrc)
     }
@@ -100,8 +99,6 @@ const ImageDropper = ({ setSrc, handlePopup, popupRef }) => {
       flexDirection="column"
       textAlign="center"
     >
-       <Button onClick={handlePopup}>View Selected Image in Popup</Button>
-
       {droppedImages.length === 0 ? (
         <span>Drop your image files here:</span>
       ) : listDroppedImages()}
