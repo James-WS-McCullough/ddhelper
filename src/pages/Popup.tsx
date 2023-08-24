@@ -20,6 +20,34 @@ const Popup = () => {
     return () => window.removeEventListener("message", handleMessage);
 }, []);
 
+const renderPortraits = () => {
+  const numPortraits = portraitsSrcs.length;
+
+  // If 4 or more images, just render them in a grid
+  if (numPortraits >= 4) {
+      return (
+          <Box display="flex" flexWrap="wrap" justifyContent="center">
+              {portraitsSrcs.map((src, index) => (
+                  <Box key={index} flexBasis={{ base: "50%", md: "25%" }} p={2}>
+                      <img src={src} alt={`Portrait ${index}`} style={{ width: '100%', height: 'auto' }} />
+                  </Box>
+              ))}
+          </Box>
+      );
+  }
+
+  // For 1-3 images, render them as larger images centered on the screen
+  return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+          {portraitsSrcs.map((src, index) => (
+              <Box key={index} flexBasis="100%" p={2}>
+                  <img src={src} alt={`Portrait ${index}`} style={{ maxWidth: '100%', height: 'auto' }} />
+              </Box>
+          ))}
+      </Box>
+  );
+};
+
   return (
     <Box 
     w="100vw" 
@@ -30,13 +58,7 @@ const Popup = () => {
     alignItems="center"
     justifyContent="center"
 >
-<SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} spacing={4} width="100%">
-                {portraitsSrcs.map((src, index) => (
-                    <Box key={index}>
-                        <img src={src} alt={`Portrait ${index}`} style={{ width: '100%', height: 'auto' }} />
-                    </Box>
-                ))}
-            </SimpleGrid>
+{renderPortraits()}
       <Box 
     position={'absolute'} 
     display="flex"
