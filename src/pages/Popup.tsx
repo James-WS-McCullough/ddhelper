@@ -38,7 +38,7 @@ const renderPortraits = () => {
 
   // For 1-3 images, render them as larger images centered on the screen
   return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+      <Box display="flex" justifyContent="center" alignItems="center" height="80%">
           {portraitsSrcs.map((src, index) => (
               <Box key={index} flexBasis="100%" p={2}>
                   <img src={src} alt={`Portrait ${index}`} style={{ maxWidth: '100%', height: 'auto' }} />
