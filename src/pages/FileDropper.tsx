@@ -11,13 +11,59 @@ const AudioPlayer = ({ fileObject }) => {
   const stepDuration = FADE_DURATION / STEPS;
   const [decrementStep, setDecrementStep] = useState(volume / 100 / STEPS);
 
+  useEffect(() => {
+    const audioInstance = new Audio(src);
+    setAudio(audioInstance);
+    
+    const handleLoop = () => {
+      if (fileObject.loop) {
+        audioInstance.currentTime = 0;
+        playAudio(); // Call the play function here
+      } else {
+        setIsPlaying(false);
+      }
+    };
+  
+    audioInstance.addEventListener('ended', handleLoop);
+  
+    return () => {
+      audioInstance.pause(); // Ensure audio is paused when the component is unmounted
+      audioInstance.removeEventListener('ended', handleLoop);
+    };
+  }, [src, fileObject.loop]);
+  
+  const playAudio = () => {
+    if (!audio) return; // Guard clause
+    
+    audio.volume = volume / 100; // Ensure we reset the volume when playing again
+    audio.play();
+    setIsPlaying(true);
+  };
+  
+  const handleToggle = () => {
+    if (!audio) return; // Guard clause
+  
+    if (isPlaying) {
+      if (fileObject.loop) {
+        fadeOut();
+      } else {
+        audio.pause();
+        audio.currentTime = 0;
+        setIsPlaying(false);
+      }
+    } else {
+      playAudio();
+    }
+  };
 
   useEffect(() => {
     const audioInstance = new Audio(src);
     setAudio(audioInstance);
     
     audioInstance.onended = () => {
-      setIsPlaying(false);
+      if(!fileObject.loop) {
+        setIsPlaying(false);
+      }
     };
 
     if (fileObject.loop) {
@@ -25,12 +71,11 @@ const AudioPlayer = ({ fileObject }) => {
         audioInstance.currentTime = 0;
         audioInstance.play();
       });
+      return () => {
+        audioInstance.pause(); // Ensure audio is paused when the component is unmounted
+        audioInstance.removeEventListener('ended', audioInstance.onended);
+      };
     }
-
-    return () => {
-      audioInstance.pause(); // Ensure audio is paused when the component is unmounted
-      audioInstance.removeEventListener('ended', audioInstance.onended);
-    };
   }, [src, fileObject.loop]);
 
   const fadeOut = () => {
@@ -46,24 +91,6 @@ const AudioPlayer = ({ fileObject }) => {
         audio.currentTime = 0;
       }
       setIsPlaying(false);
-    }
-  };
-
-  const handleToggle = () => {
-    if (!audio) return; // Guard clause
-
-    if (isPlaying) {
-      if (fileObject.loop) {
-        fadeOut();
-      } else {
-        audio.pause();
-        audio.currentTime = 0;
-        setIsPlaying(false);
-      }
-    } else {
-      audio.volume = volume / 100; // Ensure we reset the volume when playing again
-      audio.play();
-      setIsPlaying(true);
     }
   };
 

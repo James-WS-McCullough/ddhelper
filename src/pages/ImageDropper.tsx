@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  VStack, Box, Image, useToast, SimpleGrid, Text
+  VStack, Box, Image, useToast, SimpleGrid, Text, Button
 } from '@chakra-ui/react';
 
 const ImageViewer = ({ fileObject, isSelected, onClick }) => (
@@ -102,12 +102,26 @@ const ImageDropper = ({setSelectedPortraits, selectedPortraits, setSelectedLocat
           {locationImages.length > 0 && (
             <>
               <Text fontSize="xl" mb={4}>Location Images</Text>
+              <Button 
+                mb={4}
+                onClick={() => setSelectedLocation(null)}
+                colorScheme={selectedLocation === null ? 'blue' : 'gray'}
+              >
+                Clear
+              </Button>
               {displayImages(locationImages, true)}
             </>
           )}
           {portraitImages.length > 0 && (
             <>
               <Text fontSize="xl" mt={locationImages.length > 0 ? 8 : 0} mb={4}>Portrait Images</Text>
+              <Button 
+                mb={4}
+                onClick={() => setSelectedPortraits([])}
+                colorScheme={selectedPortraits.length === 0 ? 'blue' : 'gray'}
+              >
+                Clear
+              </Button>
               {displayImages(portraitImages, false)}
             </>
           )}

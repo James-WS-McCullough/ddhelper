@@ -41,7 +41,7 @@ const renderPortraits = () => {
       <Box display="flex" justifyContent="center" alignItems="center" height="80%">
           {portraitsSrcs.map((src, index) => (
               <Box key={index} flexBasis="100%" p={2}>
-                  <img src={src} alt={`Portrait ${index}`} style={{ maxWidth: '100%', height: 'auto' }} />
+                  <img src={src} alt={`Portrait ${index}`} style={{ maxWidth: '100%', maxHeight: '80vh' }} />
               </Box>
           ))}
       </Box>
