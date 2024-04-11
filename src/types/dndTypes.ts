@@ -44,8 +44,8 @@ export const stats = {
 
 export const statEmojis = {
     STR: "💪",
-    DEX: "🏃",
-    CON: "❤️",
+    DEX: "🏹",
+    CON: "🛡️",
     INT: "🧠",
     WIS: "👁️",
     CHA: "💬",
@@ -108,6 +108,10 @@ export const skillStats = {
 }
 
 export type skills = typeof skills[keyof typeof skills];
+
+export type skillBlock = {
+    [key in skills]?: number
+}
 
 export const conditions = {
     BLINDED: "Blinded",
@@ -216,9 +220,7 @@ export type monster = {
     hitPoints: number,
     speed: number,
     stats: statBlock,
-    skills: {
-        [key in skills]?: number
-    },
+    skills: skillBlock,
     damageResistances: {
         [key in damageTypes]?: number
     },
@@ -247,7 +249,7 @@ export type monster = {
 
 export type player = {
     name: string,
-    class: string,
+    class: classes,
     level: number,
     armorClass: number,
     speed: number,
@@ -255,9 +257,7 @@ export type player = {
     maxHitPoints: number,
     alignment: alignments,
     stats: statBlock,
-    skills: {
-        [key in skills]?: number
-    },
+    skills: skillBlock,
     damageResistances: {
         [key in damageTypes]?: number
     },
@@ -280,3 +280,22 @@ export type player = {
         description: string,
     }[],
 }
+
+export type character = player | monster;
+
+export const classes = {
+    BARBARIAN: "Barbarian",
+    BARD: "Bard",
+    CLERIC: "Cleric",
+    DRUID: "Druid",
+    FIGHTER: "Fighter",
+    MONK: "Monk",
+    PALADIN: "Paladin",
+    RANGER: "Ranger",
+    ROGUE: "Rogue",
+    SORCERER: "Sorcerer",
+    WARLOCK: "Warlock",
+    WIZARD: "Wizard",
+}
+
+export type classes = typeof classes[keyof typeof classes];
