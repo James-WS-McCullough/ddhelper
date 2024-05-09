@@ -1,28 +1,37 @@
-import React, { useState } from 'react';
-import { Box, Text, Button, VStack, HStack, Input } from '@chakra-ui/react';
+import React, { useState } from "react";
+import { Box, Text, Button, VStack, HStack, Input } from "@chakra-ui/react";
 
-const ScoreItem = ({ name, successes, failures, onUpdateSuccess, onUpdateFailure, onRemove }) => (
+const ScoreItem = ({
+  name,
+  successes,
+  failures,
+  onUpdateSuccess,
+  onUpdateFailure,
+  onRemove,
+}) => (
   <HStack spacing={5} alignItems="center">
     <Text>{name}</Text>
-    <Button 
-      onClick={() => onUpdateSuccess(successes + 1)} 
+    <Button
+      onClick={() => onUpdateSuccess(successes + 1)}
       isDisabled={successes >= 3}
       colorScheme="green"
     >
       {successes}
     </Button>
-    <Button 
-      onClick={() => onUpdateFailure(failures + 1)} 
+    <Button
+      onClick={() => onUpdateFailure(failures + 1)}
       isDisabled={failures >= 3}
       colorScheme="red"
     >
       {failures}
     </Button>
-    <Button onClick={onRemove} colorScheme="gray" size="sm">Remove</Button>
+    <Button onClick={onRemove} colorScheme="blue" size="sm">
+      Remove
+    </Button>
   </HStack>
 );
 
-const ScoreInput = ({scores, setScores}) => {
+const ScoreInput = ({ scores, setScores }) => {
   const [name, setName] = useState("");
 
   const handleAdd = () => {
@@ -51,13 +60,19 @@ const ScoreInput = ({scores, setScores}) => {
   return (
     <VStack spacing={5}>
       <HStack spacing={5}>
-        <Input value={name} onChange={e => setName(e.target.value)} placeholder="Name" />
-        <Button onClick={handleAdd} isDisabled={!name}>Add</Button>
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Name"
+        />
+        <Button colorScheme="blue" onClick={handleAdd} isDisabled={!name}>
+          Add
+        </Button>
       </HStack>
       {scores.map((score, index) => (
-        <ScoreItem 
-          key={index} 
-          {...score} 
+        <ScoreItem
+          key={index}
+          {...score}
           onUpdateSuccess={(value) => updateSuccess(index, value)}
           onUpdateFailure={(value) => updateFailure(index, value)}
           onRemove={() => handleRemove(index)}

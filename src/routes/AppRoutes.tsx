@@ -6,15 +6,7 @@ import Popup from "../pages/Popup";
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route
-        path="/"
-        element={<Layout />}
-      >
-        <Route
-          index
-          element={<Home2 />}
-        />
-      </Route>
+      <Route path="/" element={<Home2 />} />
       <Route path="/popup" element={<Popup />} />
     </Routes>
   );

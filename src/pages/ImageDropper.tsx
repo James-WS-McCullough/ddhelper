@@ -1,39 +1,61 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
-  VStack, Box, Image, useToast, SimpleGrid, Text, Button
-} from '@chakra-ui/react';
+  VStack,
+  Box,
+  Image,
+  useToast,
+  SimpleGrid,
+  Text,
+  Button,
+  Flex,
+} from "@chakra-ui/react";
+import { parseFilename } from "../generics/parseFilename";
 
 const ImageViewer = ({ fileObject, isSelected, onClick }) => (
-  <Box
+  <VStack
     p={2}
-    border={isSelected ? '2px solid blue' : '1px solid gray'}
+    border={isSelected ? "1px solid white" : "1px solid gray"}
+    bg={isSelected ? "blue.700" : "transparent"}
     onClick={onClick}
     cursor="pointer"
     borderRadius="md"
+    width="150px"
   >
+    <Text fontSize="sm">{parseFilename(fileObject.file.name)}</Text>
     <Image
       src={fileObject.src}
       alt={fileObject.file.name}
-      boxSize="100px"
+      boxSize="120px"
       objectFit="cover"
     />
-  </Box>
+  </VStack>
 );
 
-const ImageDropper = ({setSelectedPortraits, selectedPortraits, setSelectedLocation, selectedLocation, droppedImages, setDroppedImages}) => {
+const ImageDropper = ({
+  setSelectedPortraits,
+  selectedPortraits,
+  setSelectedLocation,
+  selectedLocation,
+  droppedImages,
+  setDroppedImages,
+}) => {
   const toast = useToast();
 
-  const locationImages = droppedImages.filter(img => img.file.name.includes('location'));
-  const portraitImages = droppedImages.filter(img => !img.file.name.includes('location'));
+  const locationImages = droppedImages.filter((img) =>
+    img.file.name.includes("location")
+  );
+  const portraitImages = droppedImages.filter(
+    (img) => !img.file.name.includes("location")
+  );
 
   const handleImageClick = (index, isLocation) => {
     if (isLocation) {
       setSelectedLocation(index);
       return;
     }
-    
+
     if (selectedPortraits.includes(index)) {
-      setSelectedPortraits(selectedPortraits.filter(i => i !== index));
+      setSelectedPortraits(selectedPortraits.filter((i) => i !== index));
     } else {
       setSelectedPortraits([...selectedPortraits, index]);
     }
@@ -49,8 +71,8 @@ const ImageDropper = ({setSelectedPortraits, selectedPortraits, setSelectedLocat
   const displayImages = (images, isLocation) => (
     <SimpleGrid columns={3} spacing={4}>
       {images.map((fileObject, index) => (
-        <ImageViewer 
-          key={index} 
+        <ImageViewer
+          key={index}
           fileObject={fileObject}
           isSelected={isImageSelected(index, isLocation)}
           onClick={() => handleImageClick(index, isLocation)}
@@ -62,15 +84,20 @@ const ImageDropper = ({setSelectedPortraits, selectedPortraits, setSelectedLocat
   return (
     <VStack
       spacing={5}
-      onDragOver={e => e.preventDefault()}
-      onDrop={e => {
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => {
         e.preventDefault();
-        const files = [...e.dataTransfer.files].filter(file => file.type.startsWith('image/'));
+        const files = [...e.dataTransfer.files].filter((file) =>
+          file.type.startsWith("image/")
+        );
         if (files.length > 0) {
           files.forEach((file) => {
             const reader = new FileReader();
             reader.onloadend = () => {
-              setDroppedImages(prev => [...prev, { file, src: reader.result }]);
+              setDroppedImages((prev) => [
+                ...prev,
+                { file, src: reader.result },
+              ]);
             };
             reader.readAsDataURL(file);
           });
@@ -84,28 +111,25 @@ const ImageDropper = ({setSelectedPortraits, selectedPortraits, setSelectedLocat
           });
         }
       }}
-      borderWidth={2}
-      borderRadius="md"
-      p={4}
       w="100%"
-      h="full"
       display="flex"
       alignItems="center"
       justifyContent="center"
       flexDirection="column"
       textAlign="center"
+      h={droppedImages.length === 0 ? "100%" : "auto"}
     >
       {droppedImages.length === 0 ? (
-        <span>Drop your image files here:</span>
+        <Text fontSize="xl">Drop your image files here!</Text>
       ) : (
         <>
           {locationImages.length > 0 && (
             <>
-              <Text fontSize="xl" mb={4}>Location Images</Text>
-              <Button 
-                mb={4}
+              <Text fontSize="xl">Location Images</Text>
+              <Button
                 onClick={() => setSelectedLocation(null)}
-                colorScheme={selectedLocation === null ? 'blue' : 'gray'}
+                colorScheme="red"
+                isDisabled={selectedLocation === null}
               >
                 Clear
               </Button>
@@ -114,11 +138,14 @@ const ImageDropper = ({setSelectedPortraits, selectedPortraits, setSelectedLocat
           )}
           {portraitImages.length > 0 && (
             <>
-              <Text fontSize="xl" mt={locationImages.length > 0 ? 8 : 0} mb={4}>Portrait Images</Text>
-              <Button 
+              <Text fontSize="xl" mt={locationImages.length > 0 ? 8 : 0}>
+                Portrait Images
+              </Text>
+              <Button
                 mb={4}
                 onClick={() => setSelectedPortraits([])}
-                colorScheme={selectedPortraits.length === 0 ? 'blue' : 'gray'}
+                colorScheme="red"
+                isDisabled={selectedPortraits.length === 0}
               >
                 Clear
               </Button>
