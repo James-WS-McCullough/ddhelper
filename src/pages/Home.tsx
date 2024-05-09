@@ -99,7 +99,7 @@ export default function Home2() {
             }}
             borderBottomColor="white"
           >
-            Death Throws
+            Death Throw Display
           </Tab>
           <Tab
             borderColor="gray.600"
@@ -156,7 +156,9 @@ export default function Home2() {
             <ScoreInput scores={scores} setScores={setScores} />
           </TabPanel>
           <TabPanel>
-            <Text fontSize="xl">Open Display Popup</Text>
+            <Text fontSize="xl" marginBottom="3">
+              Open Display Popup
+            </Text>
             <Button colorScheme="blue" onClick={handlePopup}>
               Open Popup
             </Button>
