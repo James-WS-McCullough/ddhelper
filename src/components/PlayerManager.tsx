@@ -13,6 +13,7 @@ import {
   ModalCloseButton,
   Text,
   HStack,
+  IconButton,
 } from "@chakra-ui/react";
 import { classes, player } from "../types/dndTypes";
 import { PlayerForm } from "./PlayerForm";
@@ -20,6 +21,10 @@ import {
   loadPlayersFromStorage,
   savePlayersToStorage,
 } from "../generics/localStorageHelpers";
+import DarkModalContent from "./DarkModalContent";
+import ToggleOnIcon from "@mui/icons-material/ToggleOn";
+import ToggleOffIcon from "@mui/icons-material/ToggleOff";
+import EditIcon from "@mui/icons-material/Edit";
 
 export const PlayerManager: React.FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -96,20 +101,18 @@ export const PlayerManager: React.FC = () => {
               {player.name} - LV{player.level} {classes[player.class]}
             </Text>
             <HStack>
-              <Button
-                ml={4}
+              <IconButton
+                colorScheme="teal"
+                onClick={() => handleEnableToggle(player)}
+                aria-label="Toggle Player"
+                icon={player.isEnabled ? <ToggleOnIcon /> : <ToggleOffIcon />}
+              />
+              <IconButton
                 colorScheme="blue"
                 onClick={() => openModalToEdit(player)}
-              >
-                Edit
-              </Button>
-              <Button
-                ml={4}
-                colorScheme={player.isEnabled ? "red" : "green"}
-                onClick={() => handleEnableToggle(player)}
-              >
-                {player.isEnabled ? "Disable" : "Enable"}
-              </Button>
+                aria-label="Edit Player"
+                icon={<EditIcon />}
+              />
             </HStack>
           </HStack>
         ))}
@@ -126,7 +129,7 @@ export const PlayerManager: React.FC = () => {
         closeOnOverlayClick={false}
       >
         <ModalOverlay />
-        <ModalContent bg="gray.800" textColor="white">
+        <DarkModalContent>
           <ModalHeader>
             {editingPlayer ? "Edit Player" : "Add Player"}
           </ModalHeader>
@@ -138,7 +141,7 @@ export const PlayerManager: React.FC = () => {
               onCancel={onClose}
             />
           </ModalBody>
-        </ModalContent>
+        </DarkModalContent>
       </Modal>
     </Box>
   );

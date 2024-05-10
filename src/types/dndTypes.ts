@@ -324,7 +324,14 @@ export type senses = {
   passivePerception: number;
 };
 
+export type encounter = {
+  id: string;
+  name: string;
+  monsters: monster[];
+};
+
 export type monster = {
+  id: string;
   name: string;
   type: monsterTypes;
   size: monsterSizes;
@@ -333,7 +340,7 @@ export type monster = {
   hitPoints: number;
   speed: number;
   stats: statBlock;
-  skills: skillBlock;
+  //skills: skillBlock;
   damageResistances: {
     [key in damageTypes]?: number;
   };
@@ -350,6 +357,7 @@ export type monster = {
     name: string;
     description: string;
   }[];
+  attacks: Attack[];
   actions: {
     name: string;
     description: string;

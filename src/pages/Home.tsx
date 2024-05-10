@@ -15,12 +15,14 @@ import AudioFileDropper from "./AudioFileDropper";
 import ImageDropper from "./ImageDropper";
 import ScoreInput from "./ScoreInput";
 import { useEffect, useState } from "react";
-import AttackForm from "../components/AttackForm";
+import AttackForm from "../components/AttackInput";
 import InitiativeTracker from "../components/IniciativeTracket";
 import SectionTab from "../components/SectionTab";
 import { StatBlockInput } from "../components/StatBlockInput";
 import { PlayerForm } from "../components/PlayerForm";
 import { PlayerManager } from "../components/PlayerManager";
+import ScrollableTabPanel from "../components/ScrollableTabPannel";
+import { EncounterManager } from "../components/EncounterManager";
 
 export default function Home2() {
   const [scores, setScores] = useState([]); // An array to hold the scores
@@ -86,7 +88,7 @@ export default function Home2() {
     >
       <Heading>D&D HELPER</Heading>
       <Tabs isFitted variant="enclosed" w="100%" height="calc(100% - 100px)">
-        <TabList mb="1">
+        <TabList>
           <SectionTab>Sound + Images</SectionTab>
           <SectionTab>Initiative Tracker</SectionTab>
           <SectionTab>Player Config</SectionTab>
@@ -94,7 +96,7 @@ export default function Home2() {
           <SectionTab>Death Throw Display</SectionTab>
           <SectionTab>Setup</SectionTab>
         </TabList>
-        <TabPanels w="100%" height="calc(100% - 50px)">
+        <TabPanels w="100%" height="calc(100% - 60px)">
           <TabPanel w="100%" height="100%">
             <HStack spacing={5} w="100%" height="100%">
               <Box
@@ -134,30 +136,18 @@ export default function Home2() {
               </Box>
             </HStack>
           </TabPanel>
-          <TabPanel>
+          <ScrollableTabPanel>
             <InitiativeTracker />
-          </TabPanel>
-          <TabPanel>
-            <Box
-              flex={1}
-              p={3}
-              borderWidth={1}
-              borderRadius="md"
-              display="flex"
-              flexDirection="column" // Ensures the flex items are stacked vertically
-              maxH="68vh"
-              overflow="auto"
-            >
-              <PlayerManager />
-            </Box>
-          </TabPanel>
-          <TabPanel>
-            <Text>Coming Soon!</Text>
-            <AttackForm />
-          </TabPanel>
-          <TabPanel>
+          </ScrollableTabPanel>
+          <ScrollableTabPanel>
+            <PlayerManager />
+          </ScrollableTabPanel>
+          <ScrollableTabPanel>
+            <EncounterManager />
+          </ScrollableTabPanel>
+          <ScrollableTabPanel>
             <ScoreInput scores={scores} setScores={setScores} />
-          </TabPanel>
+          </ScrollableTabPanel>
           <TabPanel>
             <Text fontSize="xl" marginBottom="3">
               Open Display Popup

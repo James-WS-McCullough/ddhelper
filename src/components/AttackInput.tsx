@@ -35,8 +35,13 @@ import {
   RangedAttack,
 } from "../types/dndTypes";
 import DamageDiceComponent from "./DamageDiceComponent";
-const AttackForm: React.FC = () => {
-  const [attacks, setAttacks] = useState<Attack[]>([]);
+
+type AttackInputProps = {
+  attacks: Attack[];
+  onSave: (attacks: Attack[]) => void;
+};
+
+const AttackInput = ({ attacks, onSave }: AttackInputProps) => {
   const [attackString, setAttackString] = useState<string>("");
 
   const addAttack = () => {
@@ -50,88 +55,17 @@ const AttackForm: React.FC = () => {
       damageType: damageTypes.SLASHING,
       description: "",
     };
-    setAttacks([...attacks, newAttack]);
+    onSave([...attacks, newAttack]);
   };
 
   const handleInputChange = (id: number, field: string, value: any) => {
-    setAttacks((attacks) =>
-      attacks.map((attack) => {
-        if (attack.id === id) {
-          return { ...attack, [field]: value };
-        }
-        return attack;
-      })
-    );
-  };
-
-  const formatAttackDescription = (attack: Attack) => {
-    let description;
-    switch (attack.type) {
-      case AttackType.Melee:
-        const meleeAttack = attack as MeleeAttack;
-        description = `${meleeAttack.name}. Melee Attack: [rollable]+${
-          meleeAttack.toHit
-        };{diceNotation:"1d20+${
-          meleeAttack.toHit
-        }",rollType:"to hit",rollAction:"${
-          meleeAttack.name
-        }"}[/rollable] to hit, reach ${meleeAttack.reach}. Hit: ${
-          meleeAttack.hitDamage
-        } [rollable]${meleeAttack.hitDamage}{diceNotation:"${
-          meleeAttack.hitDamage
-        }",rollType:"damage",rollAction:"${meleeAttack.name}",rollDamageType:"${
-          damageTypes[meleeAttack.damageType as keyof typeof damageTypes]
-        }"}[/rollable] ${
-          damageTypes[meleeAttack.damageType as keyof typeof damageTypes]
-        } damage.\n${meleeAttack.description}`;
-        break;
-      case AttackType.Ranged:
-        const rangedAttack = attack as RangedAttack;
-        description = `${rangedAttack.name}. Ranged Attack: [rollable]+${
-          rangedAttack.toHit
-        };{diceNotation:"1d20+${
-          rangedAttack.toHit
-        }",rollType:"to hit",rollAction:"${
-          rangedAttack.name
-        }"}[/rollable] to hit, range ${rangedAttack.shortRange}/${
-          rangedAttack.longRange
-        }. Hit: ${rangedAttack.hitDamage} [rollable]${
-          rangedAttack.hitDamage
-        }{diceNotation:"${
-          rangedAttack.hitDamage
-        }",rollType:"damage",rollAction:"${
-          rangedAttack.name
-        }",rollDamageType:"${
-          damageTypes[rangedAttack.damageType as keyof typeof damageTypes]
-        }"}[/rollable] ${
-          damageTypes[rangedAttack.damageType as keyof typeof damageTypes]
-        } damage.\n${rangedAttack.description}`;
-        break;
-      // case AttackType.Spell:
-      //   description = `${attack.name}. ${attack.subType} Spell Attack: ${attack.effectDescription}. Spell Save DC: ${attack.spellSaveDC}, [rollable]{diceNotation:"${attack.hitDamage}",rollType:"damage",rollAction:"${attack.name}",rollDamageType:"${attack.damageType}"}[/rollable] ${attack.damageType} damage.`;
-      //   break;
-      // case AttackType.AoE:
-      //   description = `${attack.name}. Area of Effect (${attack.subType}) Attack: ${attack.effectDescription}, range ${attack.range}. [rollable]{diceNotation:"${attack.hitDamage}",rollType:"damage",rollAction:"${attack.name}",rollDamageType:"${attack.damageType}"}[/rollable] ${attack.damageType} damage.`;
-      //   break;
-      // case AttackType.ConditionEffect:
-      //   description = `${attack.name}. ${attack.subType} Condition Effect: ${attack.conditionDescription} when ${attack.effectTrigger === 'Hit' ? 'hit' : 'failing a save'}, DC ${attack.conditionSaveDC}. [rollable]{diceNotation:"${attack.hitDamage}",rollType:"damage",rollAction:"${attack.name}",rollDamageType:"${attack.damageType}"}[/rollable] ${attack.damageType} damage.`;
-      //   break;
-      // case AttackType.Utility:
-      //   description = `${attack.name}. Utility: ${attack.utilityType}, ${attack.effectDescription}.`;
-      //   break;
-      default:
-        description = `${attack.name}. ${attack.description}`;
-        break;
-    }
-    return description;
-  };
-
-  const exportAttacks = () => {
-    const formattedAttacks = attacks
-      .map((attack) => formatAttackDescription(attack))
-      .join("\n");
-    setAttackString(formattedAttacks);
-    return formattedAttacks;
+    const newAttacks = attacks.map((attack) => {
+      if (attack.id === id) {
+        return { ...attack, [field]: value };
+      }
+      return attack;
+    });
+    onSave(newAttacks);
   };
 
   const renderAttackFields = (attack: Attack) => {
@@ -315,9 +249,7 @@ const AttackForm: React.FC = () => {
             />
           </FormControl>
           <Button
-            onClick={() =>
-              setAttacks(attacks.filter((a) => a.id !== attack.id))
-            }
+            onClick={() => onSave(attacks.filter((a) => a.id !== attack.id))}
             colorScheme="red"
             alignSelf="flex-end"
           >
@@ -327,15 +259,11 @@ const AttackForm: React.FC = () => {
       ))}
       <HStack paddingY={5}>
         <Button onClick={addAttack} colorScheme="green">
-          Add Attack
-        </Button>
-        <Button colorScheme="blue" onClick={exportAttacks}>
-          Export Attacks
+          New Attack
         </Button>
       </HStack>
-      <Textarea value={attackString} isReadOnly />
     </VStack>
   );
 };
 
-export default AttackForm;
+export default AttackInput;
