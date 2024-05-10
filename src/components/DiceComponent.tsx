@@ -4,31 +4,49 @@ import { diceArray, diceOptions, diceTypesEnums } from "../types/dndTypes";
 import { AddIcon, MinusIcon } from "@chakra-ui/icons";
 
 type DiceComponentProps = {
-  onChange: (dice: diceArray) => void;
+  onChange: (dice: diceArray, modifier: number) => void;
+  initialDice: diceArray;
+  initialModifier: number;
 };
 
-const DiceComponent = ({ onChange }: DiceComponentProps) => {
-  const [diceList, setDiceList] = useState([{ diceNumber: 1, diceType: "d6" }]);
-  const [modifier, setModifier] = useState(0);
-
-  useEffect(() => {
-    onChange(diceList);
-  }, [diceList, modifier]);
+const DiceComponent = ({
+  onChange,
+  initialDice,
+  initialModifier,
+}: DiceComponentProps) => {
+  const [diceList, setDiceList] = useState(initialDice);
+  const [modifier, setModifier] = useState(initialModifier);
 
   const handleDiceChange = (index: number, field: string, value: any) => {
-    setDiceList((diceList) =>
-      diceList.map((entry, idx) =>
+    setDiceList((diceList) => {
+      const newDiceList = diceList.map((entry, idx) =>
         idx === index ? { ...entry, [field]: value } : entry
-      )
-    );
+      );
+
+      onChange(newDiceList, modifier);
+      return newDiceList;
+    });
+  };
+
+  const handleModifierChange = (value: number) => {
+    setModifier(value);
+    onChange(diceList, value);
   };
 
   const addDiceEntry = () => {
-    setDiceList((diceList) => [...diceList, { diceNumber: 1, diceType: "d6" }]);
+    setDiceList((diceList) => {
+      const newDiceList = [...diceList, { diceNumber: 1, diceType: "d6" }];
+      onChange(newDiceList, modifier);
+      return newDiceList;
+    });
   };
 
   const removeDiceEntry = (index: number) => {
-    setDiceList((diceList) => diceList.filter((_, idx) => idx !== index));
+    setDiceList((diceList) => {
+      const newDiceList = diceList.filter((_, idx) => idx !== index);
+      onChange(newDiceList, modifier);
+      return newDiceList;
+    });
   };
 
   const calculateMin = () => {
@@ -90,7 +108,7 @@ const DiceComponent = ({ onChange }: DiceComponentProps) => {
       <Input
         width="70px"
         value={modifier}
-        onChange={(e) => setModifier(parseInt(e.target.value) || 0)}
+        onChange={(e) => handleModifierChange(parseInt(e.target.value) || 0)}
         type="number"
       />
       <IconButton

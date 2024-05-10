@@ -51,8 +51,16 @@ const AttackInput = ({ attacks, onSave }: AttackInputProps) => {
       type: AttackType.Melee,
       toHit: "7",
       reach: "5ft",
-      hitDamage: "",
-      damageType: damageTypes.SLASHING,
+      damage: {
+        dice: [
+          {
+            diceNumber: 1,
+            diceType: "d6",
+          },
+        ],
+        modifier: 0,
+        damageType: "SLASHING",
+      },
       description: "",
     };
     onSave([...attacks, newAttack]);
@@ -65,6 +73,7 @@ const AttackInput = ({ attacks, onSave }: AttackInputProps) => {
       }
       return attack;
     });
+    console.log(newAttacks);
     onSave(newAttacks);
   };
 
@@ -204,18 +213,9 @@ const AttackInput = ({ attacks, onSave }: AttackInputProps) => {
           <FormControl>
             <FormLabel>Hit Damage</FormLabel>
             <DamageDiceComponent
-              initialDamageEntry={{
-                dice: [
-                  {
-                    diceNumber: 1,
-                    diceType: "d6",
-                  },
-                ],
-                damageType: "SLASHING",
-              }}
+              initialDamageEntry={attack.damage}
               onChange={(entry) => {
-                handleInputChange(attack.id, "hitDamage", entry.dice);
-                handleInputChange(attack.id, "damageType", entry.damageType);
+                handleInputChange(attack.id, "damage", entry);
               }}
             />
           </FormControl>

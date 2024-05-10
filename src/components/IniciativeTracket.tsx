@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -11,12 +11,25 @@ import {
   IconButton,
   HStack,
   Text,
+  useDisclosure,
+  Modal,
+  ModalOverlay,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  Select,
+  ModalFooter,
 } from "@chakra-ui/react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import { creature } from "../types/dndTypes";
-import { loadPlayersFromStorage } from "../generics/localStorageHelpers";
+import { creature, encounter } from "../types/dndTypes";
+import {
+  loadEncountersFromStorage,
+  loadPlayersFromStorage,
+} from "../generics/localStorageHelpers";
+import DarkModalContent from "./DarkModalContent";
+import { calculateStatModifier, rollD20 } from "../generics/dndHelpers";
 
 // Define TypeScript interfaces for participant and props if necessary
 interface Participant {
@@ -30,6 +43,32 @@ const InitiativeTracker: React.FC = () => {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [newParticipant, setNewParticipant] = useState<string>("");
   const [newInitiative, setNewInitiative] = useState<string>("");
+  const [encounters, setEncounters] = useState<encounter[]>([]);
+  const [selectedEncounterId, setSelectedEncounterId] = useState<string>("");
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  useEffect(() => {
+    setEncounters(loadEncountersFromStorage());
+  }, []);
+
+  const handleAddEncounterParticipants = () => {
+    const selectedEncounter = encounters.find(
+      (e) => e.id === selectedEncounterId
+    );
+    if (selectedEncounter) {
+      const encounterParticipants = selectedEncounter.monsters.map(
+        (monster) => ({
+          id: Date.now() + Math.random(), // Ensure unique ID
+          name: monster.name,
+          initiative: rollD20() + calculateStatModifier(monster.stats.DEX),
+          creature: monster,
+        })
+      );
+      setParticipants([...participants, ...encounterParticipants]);
+      onClose(); // Close the modal after adding
+    }
+  };
 
   const [currentParticipant, setCurrentParticipant] =
     useState<Participant | null>(null);
@@ -202,6 +241,9 @@ const InitiativeTracker: React.FC = () => {
           <Button colorScheme="blue" onClick={handleAddPlayers}>
             Add Players
           </Button>
+          <Button colorScheme="blue" onClick={onOpen}>
+            Add Encounter
+          </Button>
           <Button colorScheme="red" onClick={handleClear}>
             Clear
           </Button>
@@ -228,6 +270,38 @@ const InitiativeTracker: React.FC = () => {
           />
         </HStack>
       </VStack>
+      {/* Encounter Selection Modal */}
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <DarkModalContent>
+          <ModalHeader>Select an Encounter</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Select
+              placeholder="Select encounter"
+              onChange={(e) => setSelectedEncounterId(e.target.value)}
+            >
+              {encounters.map((encounter) => (
+                <option key={encounter.id} value={encounter.id}>
+                  {encounter.name}
+                </option>
+              ))}
+            </Select>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              colorScheme="blue"
+              mr={3}
+              onClick={handleAddEncounterParticipants}
+            >
+              Confirm
+            </Button>
+            <Button variant="ghost" onClick={onClose}>
+              Cancel
+            </Button>
+          </ModalFooter>
+        </DarkModalContent>
+      </Modal>
     </Box>
   );
 };

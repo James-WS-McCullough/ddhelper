@@ -77,8 +77,7 @@ export interface BaseAttack {
   name: string;
   type: AttackType;
   description?: string;
-  hitDamage: string;
-  damageType: damageTypes;
+  damage: DamageEntry;
 }
 
 // Extended interfaces
@@ -133,6 +132,7 @@ export type diceArray = {
 
 export interface DamageEntry {
   dice: diceArray;
+  modifier: number;
   damageType: keyof typeof damageTypes;
 }
 
@@ -340,6 +340,7 @@ export type monster = {
   hitPoints: number;
   speed: number;
   stats: statBlock;
+  attacks: Attack[];
   //skills: skillBlock;
   damageResistances: {
     [key in damageTypes]?: number;
@@ -357,7 +358,6 @@ export type monster = {
     name: string;
     description: string;
   }[];
-  attacks: Attack[];
   actions: {
     name: string;
     description: string;
