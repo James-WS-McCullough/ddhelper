@@ -15,6 +15,8 @@ import AudioFileDropper from "./AudioFileDropper";
 import ImageDropper from "./ImageDropper";
 import ScoreInput from "./ScoreInput";
 import { useEffect, useState } from "react";
+import AttackForm from "../components/AttackForm";
+import InitiativeTracker from "../components/IniciativeTracket";
 
 export default function Home2() {
   const [scores, setScores] = useState([]); // An array to hold the scores
@@ -99,6 +101,36 @@ export default function Home2() {
             }}
             borderBottomColor="white"
           >
+            Initiative Tracker
+          </Tab>
+          <Tab
+            borderColor="gray.600"
+            _selected={{
+              bg: "gray.600",
+              borderColor: "white",
+            }}
+            borderBottomColor="white"
+          >
+            Player Config
+          </Tab>
+          <Tab
+            borderColor="gray.600"
+            _selected={{
+              bg: "gray.600",
+              borderColor: "white",
+            }}
+            borderBottomColor="white"
+          >
+            Monster Designer
+          </Tab>
+          <Tab
+            borderColor="gray.600"
+            _selected={{
+              bg: "gray.600",
+              borderColor: "white",
+            }}
+            borderBottomColor="white"
+          >
             Death Throw Display
           </Tab>
           <Tab
@@ -151,6 +183,16 @@ export default function Home2() {
                 />
               </Box>
             </HStack>
+          </TabPanel>
+          <TabPanel>
+            <InitiativeTracker />
+          </TabPanel>
+          <TabPanel>
+            <Text>Coming Soon!</Text>
+          </TabPanel>
+          <TabPanel>
+            <Text>Coming Soon!</Text>
+            <AttackForm />
           </TabPanel>
           <TabPanel>
             <ScoreInput scores={scores} setScores={setScores} />
