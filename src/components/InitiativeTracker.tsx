@@ -230,7 +230,13 @@ const InitiativeTracker: React.FC = () => {
             <HStack
               key={participant.id}
               backgroundColor={
-                currentParticipant === participant ? "blue.500" : "blue.800"
+                !participant.creature
+                  ? currentParticipant === participant
+                    ? "green.500"
+                    : "green.800"
+                  : currentParticipant === participant
+                  ? "blue.500"
+                  : "blue.800"
               }
               padding={3}
               borderRadius="md"
@@ -258,12 +264,7 @@ const InitiativeTracker: React.FC = () => {
                   padding={0}
                 />
                 {!participant.creature && (
-                  <Text
-                    width={40} // Update width to 40px
-                    textAlign="start"
-                  >
-                    {participant.name}
-                  </Text>
+                  <Text textAlign="start">{participant.name}</Text>
                 )}
                 {participant.creature && (
                   <HStack>
@@ -365,6 +366,9 @@ const InitiativeTracker: React.FC = () => {
           ))}
         </VStack>
         <HStack>
+          <Text marginRight={3}>
+            Current: {currentParticipant ? currentParticipant.name : "None"}
+          </Text>
           <Button colorScheme="green" onClick={handleNextInitiative}>
             Next
           </Button>
@@ -381,7 +385,7 @@ const InitiativeTracker: React.FC = () => {
 
         <HStack>
           <Input
-            placeholder="Name"
+            placeholder="Note"
             value={newParticipant}
             onChange={(e) => setNewParticipant(e.target.value)}
             width={80} // Update width to 40px
