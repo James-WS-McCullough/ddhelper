@@ -327,10 +327,17 @@ export type senses = {
 export type encounter = {
   id: string;
   name: string;
-  monsters: monster[];
+  monsters: monsterGroup[];
 };
 
-export type monster = {
+export type combatant = {
+  id: string;
+  letter: string;
+  hitPoints: number;
+  conditions: conditions[];
+};
+
+export interface monster {
   id: string;
   name: string;
   type: monsterTypes;
@@ -366,7 +373,11 @@ export type monster = {
     name: string;
     description: string;
   }[];
-};
+}
+
+export interface monsterGroup extends monster {
+  count: number;
+}
 
 export type player = {
   name: string;

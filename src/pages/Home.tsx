@@ -16,7 +16,7 @@ import ImageDropper from "./ImageDropper";
 import ScoreInput from "./ScoreInput";
 import { useEffect, useState } from "react";
 import AttackForm from "../components/AttackInput";
-import InitiativeTracker from "../components/IniciativeTracket";
+import InitiativeTracker from "../components/InitiativeTracker";
 import SectionTab from "../components/SectionTab";
 import { StatBlockInput } from "../components/StatBlockInput";
 import { PlayerForm } from "../components/PlayerForm";

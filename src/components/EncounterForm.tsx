@@ -15,10 +15,13 @@ import {
   HStack,
   Text,
   IconButton,
+  NumberInputStepper,
+  NumberInputField,
+  NumberInput,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { MonsterForm } from "./MonsterForm"; // Ensure correct path
-import { encounter, monster } from "../types/dndTypes";
+import { encounter, monster, monsterGroup } from "../types/dndTypes";
 import DarkModalContent from "./DarkModalContent";
 import EditIcon from "@mui/icons-material/Edit";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -39,7 +42,7 @@ export const EncounterForm: React.FC<EncounterFormProps> = ({
 }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [name, setName] = useState(encounter?.name || "");
-  const [monsters, setMonsters] = useState<monster[]>(
+  const [monsters, setMonsters] = useState<monsterGroup[]>(
     encounter?.monsters || []
   );
   const [editingMonster, setEditingMonster] = useState<monster | null>(null);
@@ -49,7 +52,9 @@ export const EncounterForm: React.FC<EncounterFormProps> = ({
     onSave({ id, name, monsters });
   };
 
-  const handleSaveMonster = (monster: monster) => {
+  const handleSaveMonster = (monster: monsterGroup) => {
+    monster.count = 1;
+
     setMonsters((prev) => {
       const index = prev.findIndex((m) => m.id === monster.id);
       if (index > -1) {
@@ -60,7 +65,7 @@ export const EncounterForm: React.FC<EncounterFormProps> = ({
     onClose(); // Close the modal after saving
   };
 
-  const handleDuplicateMonster = (monster: monster) => {
+  const handleDuplicateMonster = (monster: monsterGroup) => {
     const newMonster = { ...monster, id: Date.now().toString() };
     setMonsters((prev) => [...prev, newMonster]);
   };
@@ -70,14 +75,20 @@ export const EncounterForm: React.FC<EncounterFormProps> = ({
     onOpen();
   };
 
-  const openMonsterModalToEdit = (monster: monster) => {
+  const openMonsterModalToEdit = (monster: monsterGroup) => {
     setEditingMonster(monster);
     onOpen();
   };
 
-  const handleDeleteMonster = (monster: monster) => {
+  const handleDeleteMonster = (monster: monsterGroup) => {
     setMonsters((prev) => prev.filter((m) => m.id !== monster.id));
     onClose();
+  };
+
+  const handleMonsterCountChange = (monster: monsterGroup, count: number) => {
+    setMonsters((prev) =>
+      prev.map((m) => (m.id === monster.id ? { ...m, count } : m))
+    );
   };
 
   return (
@@ -100,7 +111,27 @@ export const EncounterForm: React.FC<EncounterFormProps> = ({
             width="100%"
             justifyContent="space-between"
           >
-            <Text textColor="white">{monster.name}</Text>
+            <Text textColor="white" width="300px">
+              {monster.name}
+            </Text>
+            <HStack>
+              <Text textColor="white">Count:</Text>
+              <NumberInput
+                defaultValue={monster.count}
+                min={1}
+                max={99}
+                onChange={(valueString) => {
+                  if (valueString !== "" && !isNaN(parseInt(valueString, 10))) {
+                    handleMonsterCountChange(
+                      monster,
+                      parseInt(valueString, 10)
+                    );
+                  }
+                }}
+              >
+                <NumberInputField width="50px" p="0" textAlign="center" />
+              </NumberInput>
+            </HStack>
             <HStack>
               <IconButton
                 colorScheme="teal"
