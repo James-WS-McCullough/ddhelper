@@ -366,32 +366,9 @@ export type player = {
   level: number;
   armorClass: number;
   speed: number;
-  hitPoints: number;
   maxHitPoints: number;
-  alignment: alignments;
   stats: statBlock;
-  skills: skillBlock;
-  damageResistances: {
-    [key in damageTypes]?: number;
-  };
-  damageImmunities: {
-    [key in damageTypes]?: number;
-  };
-  conditionImmunities: {
-    [key in conditions]?: number;
-  };
-  senses: senses;
-  languages: languages[];
-  equipment: string[];
-  spells: string[];
-  traits: {
-    name: string;
-    description: string;
-  }[];
-  actions: {
-    name: string;
-    description: string;
-  }[];
+  isEnabled: boolean;
 };
 
 export type creature = player | monster;

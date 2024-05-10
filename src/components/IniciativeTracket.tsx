@@ -12,7 +12,9 @@ import {
   HStack,
   Text,
 } from "@chakra-ui/react";
-import { DeleteIcon } from "@chakra-ui/icons";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
 // Define TypeScript interfaces for participant and props if necessary
 interface Participant {
@@ -75,6 +77,11 @@ const InitiativeTracker: React.FC = () => {
     }
   };
 
+  const handleClear = (): void => {
+    setParticipants([]);
+    setCurrentParticipant(null);
+  };
+
   // Sort participants by initiative before rendering
   participants.sort((a, b) => b.initiative - a.initiative);
 
@@ -122,29 +129,35 @@ const InitiativeTracker: React.FC = () => {
             />
           </HStack>
         ))}
-        <FormControl>
-          <HStack>
-            <FormLabel>Add Player</FormLabel>
-            <Input
-              placeholder="Name"
-              value={newParticipant}
-              onChange={(e) => setNewParticipant(e.target.value)}
-              width={80} // Update width to 40px
-            />
-            <NumberInput
-              value={newInitiative}
-              onChange={(valueString) => setNewInitiative(valueString)}
-            >
-              <NumberInputField placeholder="10" />
-            </NumberInput>
-          </HStack>
-        </FormControl>
-        <Button onClick={handleAddParticipant} colorScheme="blue">
-          Add Participant
-        </Button>
-        <Button onClick={handleNextInitiative} colorScheme="green">
-          Next Initiative
-        </Button>
+        <HStack>
+          <Button colorScheme="green" onClick={handleNextInitiative}>
+            Next
+          </Button>
+          <Button colorScheme="red" onClick={handleClear}>
+            Clear
+          </Button>
+        </HStack>
+
+        <HStack>
+          <Input
+            placeholder="Name"
+            value={newParticipant}
+            onChange={(e) => setNewParticipant(e.target.value)}
+            width={80} // Update width to 40px
+          />
+          <NumberInput
+            value={newInitiative}
+            onChange={(valueString) => setNewInitiative(valueString)}
+          >
+            <NumberInputField placeholder="10" />
+          </NumberInput>
+          <IconButton
+            onClick={handleAddParticipant}
+            colorScheme="blue"
+            icon={<AddIcon />}
+            aria-label="Add participant"
+          />
+        </HStack>
       </VStack>
     </Box>
   );

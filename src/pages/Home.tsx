@@ -17,6 +17,10 @@ import ScoreInput from "./ScoreInput";
 import { useEffect, useState } from "react";
 import AttackForm from "../components/AttackForm";
 import InitiativeTracker from "../components/IniciativeTracket";
+import SectionTab from "../components/SectionTab";
+import { StatBlockInput } from "../components/StatBlockInput";
+import { PlayerForm } from "../components/PlayerForm";
+import { PlayerManager } from "../components/PlayerManager";
 
 export default function Home2() {
   const [scores, setScores] = useState([]); // An array to hold the scores
@@ -83,66 +87,12 @@ export default function Home2() {
       <Heading>D&D HELPER</Heading>
       <Tabs isFitted variant="enclosed" w="100%" height="calc(100% - 100px)">
         <TabList mb="1">
-          <Tab
-            borderColor="gray.600"
-            _selected={{
-              bg: "gray.600",
-              borderColor: "white",
-            }}
-            borderBottomColor="white"
-          >
-            Sound + Images
-          </Tab>
-          <Tab
-            borderColor="gray.600"
-            _selected={{
-              bg: "gray.600",
-              borderColor: "white",
-            }}
-            borderBottomColor="white"
-          >
-            Initiative Tracker
-          </Tab>
-          <Tab
-            borderColor="gray.600"
-            _selected={{
-              bg: "gray.600",
-              borderColor: "white",
-            }}
-            borderBottomColor="white"
-          >
-            Player Config
-          </Tab>
-          <Tab
-            borderColor="gray.600"
-            _selected={{
-              bg: "gray.600",
-              borderColor: "white",
-            }}
-            borderBottomColor="white"
-          >
-            Monster Designer
-          </Tab>
-          <Tab
-            borderColor="gray.600"
-            _selected={{
-              bg: "gray.600",
-              borderColor: "white",
-            }}
-            borderBottomColor="white"
-          >
-            Death Throw Display
-          </Tab>
-          <Tab
-            borderColor="gray.600"
-            _selected={{
-              bg: "gray.600",
-              borderColor: "white",
-            }}
-            borderBottomColor="white"
-          >
-            Setup
-          </Tab>
+          <SectionTab>Sound + Images</SectionTab>
+          <SectionTab>Initiative Tracker</SectionTab>
+          <SectionTab>Player Config</SectionTab>
+          <SectionTab>Monster Designer</SectionTab>
+          <SectionTab>Death Throw Display</SectionTab>
+          <SectionTab>Setup</SectionTab>
         </TabList>
         <TabPanels w="100%" height="calc(100% - 50px)">
           <TabPanel w="100%" height="100%">
@@ -188,7 +138,18 @@ export default function Home2() {
             <InitiativeTracker />
           </TabPanel>
           <TabPanel>
-            <Text>Coming Soon!</Text>
+            <Box
+              flex={1}
+              p={3}
+              borderWidth={1}
+              borderRadius="md"
+              display="flex"
+              flexDirection="column" // Ensures the flex items are stacked vertically
+              maxH="68vh"
+              overflow="auto"
+            >
+              <PlayerManager />
+            </Box>
           </TabPanel>
           <TabPanel>
             <Text>Coming Soon!</Text>
