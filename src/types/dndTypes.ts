@@ -330,6 +330,15 @@ export type encounter = {
   monsters: monsterGroup[];
 };
 
+// Define TypeScript interfaces for participant and props if necessary
+export interface participant {
+  id: number;
+  name: string;
+  initiative: number;
+  creature?: creature;
+  combatants?: combatant[];
+}
+
 export type combatant = {
   id: string;
   letter: string;
@@ -344,7 +353,7 @@ export interface monster {
   size: monsterSizes;
   alignment: alignments;
   armorClass: number;
-  hitPoints: number;
+  maxHitPoints: number;
   speed: number;
   stats: statBlock;
   attacks: Attack[];

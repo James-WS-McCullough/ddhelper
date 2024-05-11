@@ -29,28 +29,31 @@ import {
   creature,
   encounter,
   monsterGroup,
+  participant,
 } from "../types/dndTypes";
 import {
   loadEncountersFromStorage,
+  loadInitiativeFromStorage,
   loadPlayersFromStorage,
+  saveEncountersToStorage,
+  saveInitiativeToStorage,
 } from "../generics/localStorageHelpers";
 import DarkModalContent from "./DarkModalContent";
-import { calculateStatModifier, rollD20 } from "../generics/dndHelpers";
+import {
+  calculatePassivePerception,
+  calculateStatModifier,
+  rollD20,
+} from "../generics/dndHelpers";
 import HeartBrokenIcon from "@mui/icons-material/HeartBroken";
 import EditIcon from "@mui/icons-material/Edit";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-
-// Define TypeScript interfaces for participant and props if necessary
-interface Participant {
-  id: number;
-  name: string;
-  initiative: number;
-  creature?: creature;
-  combatants?: combatant[];
-}
+import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
+import { CreatureDisplay } from "./MonsterDisplay";
 
 const InitiativeTracker: React.FC = () => {
-  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [participants, setParticipants] = useState<participant[]>([]);
+  const [currentParticipant, setCurrentParticipant] =
+    useState<participant | null>(null);
   const [newParticipant, setNewParticipant] = useState<string>("");
   const [newInitiative, setNewInitiative] = useState<string>("");
   const [encounters, setEncounters] = useState<encounter[]>([]);
@@ -60,6 +63,9 @@ const InitiativeTracker: React.FC = () => {
   const [damageInput, setDamageInput] = useState<string>("");
   const [selectedCondition, setSelectedCondition] = useState<conditions>(
     conditions.BLINDED
+  );
+  const [selectedCreature, setSelectedCreature] = useState<creature | null>(
+    null
   );
 
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -71,6 +77,12 @@ const InitiativeTracker: React.FC = () => {
 
   useEffect(() => {
     setEncounters(loadEncountersFromStorage());
+    const { participants, currentParticipant } = loadInitiativeFromStorage();
+    if (participants.length === 0) return;
+    setParticipants(participants);
+    setCurrentParticipant(
+      participants.find((p) => p.id === currentParticipant?.id) || null
+    );
   }, []);
 
   const handleAddEncounterParticipants = () => {
@@ -83,7 +95,7 @@ const InitiativeTracker: React.FC = () => {
           const combatants = Array.from({ length: monster.count }, (_, i) => ({
             id: (Date.now() + Math.random()).toString(), // Ensure unique ID
             letter: String.fromCharCode(65 + i),
-            hitPoints: monster.hitPoints,
+            hitPoints: monster.maxHitPoints,
             conditions: [],
           })) as combatant[];
 
@@ -96,47 +108,78 @@ const InitiativeTracker: React.FC = () => {
           };
         }
       );
-      setParticipants([...participants, ...encounterParticipants]);
+      setParticipants((prev) => {
+        const newParticipants = [...prev, ...encounterParticipants];
+        saveInitiativeToStorage({
+          participants: newParticipants,
+          currentParticipant,
+        });
+        return newParticipants;
+      });
       onClose(); // Close the modal after adding
     }
   };
 
-  const [currentParticipant, setCurrentParticipant] =
-    useState<Participant | null>(null);
-
   const handleAddParticipant = (): void => {
     if (!newParticipant || newInitiative === "") return; // Prevent adding empty values
-    const participant: Participant = {
+    const participant: participant = {
       id: Date.now(), // simple unique identifier
       name: newParticipant,
       initiative: parseInt(newInitiative, 10),
     };
-    setParticipants([...participants, participant]);
+    setParticipants((prev) => {
+      const newParticipants = [...prev, participant];
+      saveInitiativeToStorage({
+        participants: newParticipants,
+        currentParticipant,
+      });
+      return newParticipants;
+    });
+    saveInitiativeToStorage({ participants, currentParticipant });
     setNewParticipant("");
     setNewInitiative("");
   };
 
   const handleRemoveParticipant = (id: number): void => {
-    setParticipants(
-      participants.filter((participant) => participant.id !== id)
-    );
+    setParticipants((prev) => {
+      const newParticipants = prev.filter(
+        (participant) => participant.id !== id
+      );
+      saveInitiativeToStorage({
+        participants: newParticipants,
+        currentParticipant,
+      });
+      return newParticipants;
+    });
   };
 
   const updateInitiative = (id: number, value: string): void => {
-    setParticipants(
-      participants.map((participant) => {
+    setParticipants((prev) => {
+      const newParticipants = prev.map((participant) => {
         if (participant.id === id) {
           return { ...participant, initiative: parseInt(value, 10) };
         }
         return participant;
-      })
-    );
+      });
+      saveInitiativeToStorage({
+        participants: newParticipants,
+        currentParticipant,
+      });
+      return newParticipants;
+    });
   };
 
   const handleNextInitiative = (): void => {
     if (!currentParticipant) {
       if (participants.length > 0) {
-        setCurrentParticipant(participants[0]);
+        setCurrentParticipant(() => {
+          const newCurrentParticipant = participants[0];
+          saveInitiativeToStorage({
+            participants,
+            currentParticipant: newCurrentParticipant,
+          });
+          return newCurrentParticipant;
+        });
       }
       return;
     }
@@ -144,15 +187,33 @@ const InitiativeTracker: React.FC = () => {
       (participant) => participant.id === currentParticipant.id
     );
     if (currentIndex === participants.length - 1) {
-      setCurrentParticipant(participants[0]);
+      setCurrentParticipant(() => {
+        const newCurrentParticipant = participants[0];
+        saveInitiativeToStorage({
+          participants,
+          currentParticipant: newCurrentParticipant,
+        });
+        return newCurrentParticipant;
+      });
     } else {
-      setCurrentParticipant(participants[currentIndex + 1]);
+      setCurrentParticipant(() => {
+        const newCurrentParticipant = participants[currentIndex + 1];
+        saveInitiativeToStorage({
+          participants,
+          currentParticipant: newCurrentParticipant,
+        });
+        return newCurrentParticipant;
+      });
     }
   };
 
   const handleClear = (): void => {
     setParticipants([]);
     setCurrentParticipant(null);
+    saveInitiativeToStorage({
+      participants: [],
+      currentParticipant: null,
+    });
   };
 
   const handleAddPlayers = (): void => {
@@ -168,13 +229,17 @@ const InitiativeTracker: React.FC = () => {
             name: player.name,
             initiative: 0,
             creature: player,
-          } as Participant)
+          } as participant)
       );
     // Add participants to state
-    setParticipants((prevParticipants) => [
-      ...prevParticipants,
-      ...playerParticipants,
-    ]);
+    setParticipants((prev) => {
+      const newParticipants = [...prev, ...playerParticipants];
+      saveInitiativeToStorage({
+        participants: newParticipants,
+        currentParticipant,
+      });
+      return newParticipants;
+    });
   };
 
   const handleUpdateCombatant = ({
@@ -184,31 +249,38 @@ const InitiativeTracker: React.FC = () => {
     damage?: number;
     conditions?: conditions[];
   }) => {
-    const updatedParticipants = participants.map((participant) => {
-      if (participant.id === selectedParticipantId) {
-        const updatedCombatants = participant.combatants?.map((combatant) => {
-          if (combatant.id === selectedCombatantId) {
-            return {
-              ...combatant,
-              conditions: conditions ? conditions : combatant.conditions,
-              hitPoints: damage
-                ? Math.max(
-                    Math.min(
-                      combatant.hitPoints - damage,
-                      (participant.creature as monsterGroup)?.hitPoints || 1000
-                    ),
-                    0
-                  )
-                : combatant.hitPoints,
-            };
-          }
-          return combatant;
-        });
-        return { ...participant, combatants: updatedCombatants };
-      }
-      return participant;
+    setParticipants((prev) => {
+      const newParticipants = prev.map((participant) => {
+        if (participant.id === selectedParticipantId) {
+          const updatedCombatants = participant.combatants?.map((combatant) => {
+            if (combatant.id === selectedCombatantId) {
+              return {
+                ...combatant,
+                conditions: conditions ? conditions : combatant.conditions,
+                hitPoints: damage
+                  ? Math.max(
+                      Math.min(
+                        combatant.hitPoints - damage,
+                        (participant.creature as monsterGroup)?.maxHitPoints ||
+                          1000
+                      ),
+                      0
+                    )
+                  : combatant.hitPoints,
+              };
+            }
+            return combatant;
+          });
+          return { ...participant, combatants: updatedCombatants };
+        }
+        return participant;
+      });
+      saveInitiativeToStorage({
+        participants: newParticipants,
+        currentParticipant,
+      });
+      return newParticipants;
     });
-    setParticipants(updatedParticipants);
     onDamageModalClose();
   };
 
@@ -287,6 +359,12 @@ const InitiativeTracker: React.FC = () => {
                       >
                         MV: {participant.creature.speed}ft
                       </Text>
+                      <Text
+                        width={20} // Update width to 40px
+                        textAlign="start"
+                      >
+                        PPer: {calculatePassivePerception(participant.creature)}
+                      </Text>
                     </VStack>
                     {participant.combatants && (
                       <VStack alignItems="start">
@@ -314,7 +392,7 @@ const InitiativeTracker: React.FC = () => {
                                 key={combatant.id}
                                 color={
                                   (participant.creature as monsterGroup)
-                                    .hitPoints /
+                                    .maxHitPoints /
                                     2 >
                                   combatant.hitPoints
                                     ? "orange"
@@ -324,7 +402,7 @@ const InitiativeTracker: React.FC = () => {
                                 {combatant.hitPoints}/
                                 {
                                   (participant.creature as monsterGroup)
-                                    .hitPoints
+                                    .maxHitPoints
                                 }{" "}
                                 hp
                               </Text>
@@ -356,12 +434,22 @@ const InitiativeTracker: React.FC = () => {
                 )}
               </HStack>
 
-              <IconButton
-                icon={<DeleteIcon />}
-                colorScheme="red"
-                aria-label="Remove participant"
-                onClick={() => handleRemoveParticipant(participant.id)}
-              />
+              <HStack>
+                {participant.creature && (
+                  <IconButton
+                    icon={<LibraryBooksIcon />}
+                    colorScheme="teal"
+                    aria-label="View Monster"
+                    onClick={() => setSelectedCreature(participant.creature)}
+                  />
+                )}
+                <IconButton
+                  icon={<DeleteIcon />}
+                  colorScheme="red"
+                  aria-label="Remove participant"
+                  onClick={() => handleRemoveParticipant(participant.id)}
+                />
+              </HStack>
             </HStack>
           ))}
         </VStack>
@@ -436,6 +524,7 @@ const InitiativeTracker: React.FC = () => {
           </ModalFooter>
         </DarkModalContent>
       </Modal>
+      {/* Damage Modal */}
       <Modal isOpen={isDamageModalOpen} onClose={onDamageModalClose}>
         <ModalOverlay />
         <DarkModalContent>
@@ -544,6 +633,28 @@ const InitiativeTracker: React.FC = () => {
                 </VStack>
               )}
             </VStack>
+          </ModalBody>
+        </DarkModalContent>
+      </Modal>
+      {/* Monster Modal */}
+      <Modal
+        isOpen={selectedCreature !== null}
+        onClose={() => setSelectedCreature(null)}
+        size="4xl"
+        closeOnEsc={true}
+        closeOnOverlayClick={true}
+      >
+        <ModalOverlay />
+        <DarkModalContent>
+          <ModalHeader>{selectedCreature?.name}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <CreatureDisplay
+              creature={selectedCreature}
+              targets={participants
+                .filter((p) => p.creature)
+                .map((p) => p.creature)}
+            />
           </ModalBody>
         </DarkModalContent>
       </Modal>

@@ -23,6 +23,7 @@ import { PlayerForm } from "../components/PlayerForm";
 import { PlayerManager } from "../components/PlayerManager";
 import ScrollableTabPanel from "../components/ScrollableTabPannel";
 import { EncounterManager } from "../components/EncounterManager";
+import { D20Icon } from "../assets/D20icon";
 
 export default function Home2() {
   const [scores, setScores] = useState([]); // An array to hold the scores
@@ -86,7 +87,10 @@ export default function Home2() {
       color="white"
       p={5}
     >
-      <Heading>D&D HELPER</Heading>
+      <HStack>
+        <D20Icon size={50} />
+        <Heading>D&D HELPER</Heading>
+      </HStack>
       <Tabs isFitted variant="enclosed" w="100%" height="calc(100% - 100px)">
         <TabList>
           <SectionTab>Sound + Images</SectionTab>

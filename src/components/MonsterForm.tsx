@@ -40,7 +40,7 @@ export const MonsterForm: React.FC<MonsterFormProps> = ({
       size: "MEDIUM",
       alignment: "NEUTRAL_EVIL",
       armorClass: 10,
-      hitPoints: 10,
+      maxHitPoints: 10,
       speed: 30,
       stats: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
       damageResistances: {},
@@ -139,11 +139,11 @@ export const MonsterForm: React.FC<MonsterFormProps> = ({
         />
       </FormControl>
       <FormControl>
-        <FormLabel>Hit Points</FormLabel>
+        <FormLabel>Max Hit Points</FormLabel>
         <Input
-          value={monsterDetails.hitPoints}
+          value={monsterDetails.maxHitPoints}
           onChange={(e) =>
-            handleInputChange("hitPoints", parseInt(e.target.value))
+            handleInputChange("maxHitPoints", parseInt(e.target.value))
           }
         />
       </FormControl>
