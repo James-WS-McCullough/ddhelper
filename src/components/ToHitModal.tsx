@@ -17,10 +17,12 @@ import {
   Attack,
   MeleeAttack,
   RangedAttack,
+  SpellAttack,
   creature,
   monster,
 } from "../types/dndTypes";
 import {
+  calculateStatModifier,
   rollD20,
   rollDiceArray,
   rollDiceArrayCrit,
@@ -50,12 +52,20 @@ export const ToHitModal = ({
 }: ToHitModalProps) => {
   const handleAttackTarget = (target, rollType) => {
     const d20Result = rollD20(rollType);
-    const result =
-      d20Result +
-      parseInt(
-        (attack as MeleeAttack).toHit || (attack as RangedAttack).toHit
-      ) +
-      monster.proficiencyBonus;
+    let result = 0;
+    if (attack.type === "Melee" || attack.type === "Ranged") {
+      result =
+        d20Result +
+        parseInt(
+          (attack as MeleeAttack).toHit || (attack as RangedAttack).toHit
+        ) +
+        monster.proficiencyBonus;
+    } else if (attack.type === "Spell") {
+      result =
+        d20Result +
+        calculateStatModifier(monster.stats[monster.spellcastingAbility]) +
+        monster.proficiencyBonus;
+    }
     const isSuccess =
       d20Result === 20 || (d20Result != 1 && result >= target.armorClass);
     const isCriticalSuccess = d20Result === 20;

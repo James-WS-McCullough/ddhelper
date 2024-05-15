@@ -95,7 +95,6 @@ export interface SpellAttack extends BaseAttack {
   subType: SpellSubType;
   range: string;
   targets: string;
-  effectDescription: string;
 }
 
 export interface AoEAttack extends BaseAttack {

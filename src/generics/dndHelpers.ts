@@ -35,9 +35,12 @@ type diceArrayProps = {
 };
 
 export const diceArrayToString = ({ dice, modifier }: diceArrayProps) => {
+  if (dice.length === 0 && modifier === 0) return "None";
+  if (dice.length === 0) return `${modifier}`;
   const diceString = dice
     .map((die) => `${die.diceNumber}${die.diceType}`)
     .join(" + ");
+  if (modifier === 0) return diceString;
   return `${diceString} + ${modifier}`;
 };
 

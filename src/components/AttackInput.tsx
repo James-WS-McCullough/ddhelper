@@ -161,24 +161,20 @@ const AttackInput = ({ attacks, onSave }: AttackInputProps) => {
               </Select>
             </FormControl>
             <FormControl>
+              <FormLabel>Range</FormLabel>
+              <Input
+                value={spellAttack.range}
+                onChange={(e) =>
+                  handleInputChange(attack.id, "range", e.target.value)
+                }
+              />
+            </FormControl>
+            <FormControl>
               <FormLabel>Targets</FormLabel>
               <Input
                 value={spellAttack.targets}
                 onChange={(e) =>
                   handleInputChange(attack.id, "targets", e.target.value)
-                }
-              />
-            </FormControl>
-            <FormControl>
-              <FormLabel>Effect Description</FormLabel>
-              <Textarea
-                value={spellAttack.effectDescription}
-                onChange={(e) =>
-                  handleInputChange(
-                    attack.id,
-                    "effectDescription",
-                    e.target.value
-                  )
                 }
               />
             </FormControl>

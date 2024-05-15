@@ -53,14 +53,16 @@ export const AttackDisplay: React.FC<AttackDisplayProps> = ({
         }, Damage:  ${diceArrayToString(melee.damage)}`;
       case "Ranged":
         const ranged = attack as RangedAttack;
-        return `To Hit: ${ranged.toHit}, Range: ${ranged.shortRange}/${
+        return `To Hit: ${ranged.toHit}, Range: ${ranged.shortRange}ft/${
           ranged.longRange
-        }, Damage: ${diceArrayToString(ranged.damage)}`;
+        }ft, Damage: ${diceArrayToString(ranged.damage)}`;
       case "Spell":
         const spell = attack as SpellAttack;
-        return `Spell DC: ${calculateSpellsaveDC(monster)}, Effect: ${
-          spell.effectDescription
-        }`;
+        return `Spellsave DC: ${calculateSpellsaveDC(monster)}, Range: ${
+          spell.range
+        }, Targets: ${spell.targets}, Damage: ${diceArrayToString(
+          spell.damage
+        )}`;
       case "AoE":
         const aoe = attack as AoEAttack;
         return `Range: ${aoe.range}, Effect: ${aoe.effectDescription}`;
@@ -95,7 +97,10 @@ export const AttackDisplay: React.FC<AttackDisplayProps> = ({
         <Text fontWeight="bold">{attack.name}</Text>
         <Text flex="1">{renderAttackDetails(attack)}</Text>
         <HStack>
-          {attack.type === "Melee" || attack.type === "Ranged" ? (
+          {attack.type === "Melee" ||
+          attack.type === "Ranged" ||
+          (attack.type === "Spell" &&
+            (attack as SpellAttack).subType === "Attack Roll") ? (
             <Button colorScheme="blue" onClick={onOpen}>
               To Hit
             </Button>
