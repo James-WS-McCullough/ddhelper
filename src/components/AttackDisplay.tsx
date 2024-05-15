@@ -28,6 +28,7 @@ import {
 } from "../generics/dndHelpers";
 import CasinoIcon from "@mui/icons-material/Casino";
 import { ToHitModal } from "./ToHitModal";
+import { formatDistance } from "../generics/parseFilename";
 
 type AttackDisplayProps = {
   attack: Attack;
@@ -53,22 +54,25 @@ export const AttackDisplay: React.FC<AttackDisplayProps> = ({
         }, Damage:  ${diceArrayToString(melee.damage)}`;
       case "Ranged":
         const ranged = attack as RangedAttack;
-        return `To Hit: ${ranged.toHit}, Range: ${ranged.shortRange}ft/${
-          ranged.longRange
-        }ft, Damage: ${diceArrayToString(ranged.damage)}`;
+        return `To Hit: ${ranged.toHit}, Range: ${formatDistance(
+          ranged.shortRange
+        )}/${formatDistance(ranged.longRange)}, Damage: ${diceArrayToString(
+          ranged.damage
+        )}`;
       case "Spell":
         const spell = attack as SpellAttack;
-        return `Spellsave DC: ${calculateSpellsaveDC(monster)}, Range: ${
-          spell.range
-        }, Targets: ${spell.targets}, Damage: ${diceArrayToString(
-          spell.damage
-        )}`;
+        return `Spellsave DC: ${calculateSpellsaveDC(
+          monster
+        )}, Range: ${formatDistance(spell.range)}, Targets: ${
+          spell.targets
+        }, Damage: ${diceArrayToString(spell.damage)}`;
       case "AoE":
         const aoe = attack as AoEAttack;
-        return `Range: ${aoe.range}, Effect: ${aoe.effectDescription}`;
-      case "Utility":
-        const utility = attack as UtilityAttack;
-        return `Utility Type: ${utility.utilityType}, Effect: ${utility.effectDescription}`;
+        return `Shape: ${aoe.subType}, Range: ${formatDistance(
+          aoe.range
+        )}, Width: ${formatDistance(aoe.width)}, Save DC: ${
+          aoe.saveDC
+        }, Damage: ${diceArrayToString(aoe.damage)}`;
       default:
         return `Damage: ${diceArrayToString(attack.damage)}`;
     }

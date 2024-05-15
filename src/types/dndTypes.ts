@@ -35,8 +35,6 @@ export enum AttackType {
   Ranged = "Ranged",
   Spell = "Spell",
   AoE = "AoE",
-  ConditionEffect = "Condition Effect",
-  Utility = "Utility",
 }
 
 export const attackTypeEmojis = {
@@ -60,7 +58,7 @@ export enum SpellSubType {
 }
 
 export enum AoESubType {
-  Burst = "Burst",
+  Cone = "Cone",
   Line = "Line",
   Sphere = "Sphere",
 }
@@ -99,8 +97,9 @@ export interface SpellAttack extends BaseAttack {
 
 export interface AoEAttack extends BaseAttack {
   subType: AoESubType;
+  width: string;
   range: string;
-  effectDescription: string;
+  saveDC: string;
 }
 
 export interface ConditionEffectAttack extends BaseAttack {

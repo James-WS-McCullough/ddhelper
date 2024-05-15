@@ -10,3 +10,10 @@ export const parseFilename = (filename: string) => {
 
   return baseName;
 };
+
+export const formatDistance = (distance: string) => {
+  if (/^\d+$/.test(distance)) {
+    return distance + "ft";
+  }
+  return distance;
+};

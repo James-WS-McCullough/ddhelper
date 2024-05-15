@@ -180,29 +180,58 @@ const AttackInput = ({ attacks, onSave }: AttackInputProps) => {
             </FormControl>
           </>
         );
-      // case AttackType.AoE:
-      //   const aoeAttack = attack as AoEAttack;
-      //   return (
-      //     <>
-      //       <FormControl>
-      //         <FormLabel>Sub-Type</FormLabel>
-      //         <Select value={aoeAttack.subType} onChange={(e) => handleInputChange(attack.id, 'subType', e.target.value)}>
-      //           {Object.values(AoESubType).map(subType => (
-      //             <option key={subType} value={subType}>{subType}</option>
-      //           ))}
-      //         </Select>
-      //       </FormControl>
-      //       <FormControl>
-      //         <FormLabel>Range/Area</FormLabel>
-      //         <Input value={aoeAttack.range} onChange={(e) => handleInputChange(attack.id, 'range', e.target.value)} />
-      //       </FormControl>
-      //       <FormControl>
-      //         <FormLabel>Effect Description</FormLabel>
-      //         <Textarea value={aoeAttack.effectDescription} onChange={(e) => handleInputChange(attack.id, 'effectDescription', e.target.value)} />
-      //       </FormControl>
-      //     </>
-      //   );
-      // Implement cases for ConditionEffect and Utility as needed
+      case AttackType.AoE:
+        const aoeAttack = attack as AoEAttack;
+        return (
+          <>
+            <FormControl>
+              <FormLabel>Sub-Type</FormLabel>
+              <Select
+                value={aoeAttack.subType}
+                onChange={(e) =>
+                  handleInputChange(attack.id, "subType", e.target.value)
+                }
+              >
+                {Object.values(AoESubType).map((subType) => (
+                  <option key={subType} value={subType}>
+                    {subType}
+                  </option>
+                ))}
+              </Select>
+            </FormControl>
+            {aoeAttack.subType === AoESubType.Line ||
+            aoeAttack.subType === AoESubType.Sphere ? (
+              <FormControl>
+                <FormLabel>Width</FormLabel>
+                <Input
+                  value={aoeAttack.width}
+                  onChange={(e) =>
+                    handleInputChange(attack.id, "width", e.target.value)
+                  }
+                />
+              </FormControl>
+            ) : null}
+            <FormControl>
+              <FormLabel>Range</FormLabel>
+              <Input
+                value={aoeAttack.range}
+                onChange={(e) =>
+                  handleInputChange(attack.id, "range", e.target.value)
+                }
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel>Save DC</FormLabel>
+              <Input
+                value={aoeAttack.saveDC}
+                onChange={(e) =>
+                  handleInputChange(attack.id, "saveDC", e.target.value)
+                }
+              />
+            </FormControl>
+          </>
+        );
+
       default:
         return null;
     }
