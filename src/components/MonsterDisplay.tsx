@@ -9,6 +9,7 @@ import {
   SimpleGrid,
   Text,
   VStack,
+  useToast,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import {
@@ -24,6 +25,10 @@ import FormBottomBar from "./FormBottomBar";
 import { StatBlockDisplay } from "./StatBlockDisplay";
 import { m } from "framer-motion";
 import { AttackDisplay } from "./AttackDisplay";
+import {
+  calculateSpellsaveDC,
+  calculateStatModifier,
+} from "../generics/dndHelpers";
 
 type CreatureDisplayProps = {
   creature: creature;
@@ -34,6 +39,7 @@ export const CreatureDisplay: React.FC<CreatureDisplayProps> = ({
   creature,
   targets,
 }) => {
+  const toast = useToast();
   // If the creature is type monster, we can access the monster-specific fields.
   // Else, monster should be null.
   const monster = (creature as monster)?.type ? (creature as monster) : null;
@@ -64,20 +70,39 @@ export const CreatureDisplay: React.FC<CreatureDisplayProps> = ({
                   <strong>Alignment:</strong> {alignments[monster.alignment]}
                 </Text>
                 <Text>
-                  <strong>Challenge Rating:</strong> {monster.challengeRating}
+                  <strong>Proficiency Bonus:</strong> +
+                  {monster.proficiencyBonus}
                 </Text>
+                {!!monster.spellcastingAbility && (
+                  <>
+                    <Text>
+                      <strong>Spellcasting Ability:</strong>{" "}
+                      {monster.spellcastingAbility}
+                    </Text>
+                    <Text>
+                      <strong>Spellsave DC:</strong>{" "}
+                      {calculateSpellsaveDC(monster)}
+                    </Text>
+                  </>
+                )}
               </>
             )}
           </SimpleGrid>
         </VStack>
         <VStack flex={1}>
-          <StatBlockDisplay statBlock={creature.stats} />
+          <StatBlockDisplay statBlock={creature.stats} toast={toast} />
         </VStack>
       </HStack>
       {!!monster && (
         <VStack width="100%" paddingTop="5">
           {monster.attacks.map((attack) => (
-            <AttackDisplay key={attack.id} attack={attack} targets={targets} />
+            <AttackDisplay
+              key={attack.id}
+              attack={attack}
+              targets={targets}
+              monster={monster}
+              toast={toast}
+            />
           ))}
         </VStack>
       )}

@@ -141,28 +141,49 @@ const AttackInput = ({ attacks, onSave }: AttackInputProps) => {
           </VStack>
         );
 
-      // case AttackType.Spell:
-      //   const spellAttack = attack as SpellAttack;
-      //   return (
-      //     <>
-      //       <FormControl>
-      //         <FormLabel>Sub-Type</FormLabel>
-      //         <Select value={spellAttack.subType} onChange={(e) => handleInputChange(attack.id, 'subType', e.target.value)}>
-      //           {Object.values(SpellSubType).map(subType => (
-      //             <option key={subType} value={subType}>{subType}</option>
-      //           ))}
-      //         </Select>
-      //       </FormControl>
-      //       <FormControl>
-      //         <FormLabel>Spell Save DC (if applicable)</FormLabel>
-      //         <Input value={spellAttack.spellSaveDC || ''} placeholder="Only for Saving Throw Spells" onChange={(e) => handleInputChange(attack.id, 'spellSaveDC', e.target.value)} />
-      //       </FormControl>
-      //       <FormControl>
-      //         <FormLabel>Effect Description</FormLabel>
-      //         <Textarea value={spellAttack.effectDescription} onChange={(e) => handleInputChange(attack.id, 'effectDescription', e.target.value)} />
-      //       </FormControl>
-      //     </>
-      //   );
+      case AttackType.Spell:
+        const spellAttack = attack as SpellAttack;
+        return (
+          <>
+            <FormControl>
+              <FormLabel>Sub-Type</FormLabel>
+              <Select
+                value={spellAttack.subType}
+                onChange={(e) =>
+                  handleInputChange(attack.id, "subType", e.target.value)
+                }
+              >
+                {Object.values(SpellSubType).map((subType) => (
+                  <option key={subType} value={subType}>
+                    {subType}
+                  </option>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl>
+              <FormLabel>Targets</FormLabel>
+              <Input
+                value={spellAttack.targets}
+                onChange={(e) =>
+                  handleInputChange(attack.id, "targets", e.target.value)
+                }
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel>Effect Description</FormLabel>
+              <Textarea
+                value={spellAttack.effectDescription}
+                onChange={(e) =>
+                  handleInputChange(
+                    attack.id,
+                    "effectDescription",
+                    e.target.value
+                  )
+                }
+              />
+            </FormControl>
+          </>
+        );
       // case AttackType.AoE:
       //   const aoeAttack = attack as AoEAttack;
       //   return (

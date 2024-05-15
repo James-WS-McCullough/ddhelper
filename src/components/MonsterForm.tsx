@@ -14,10 +14,15 @@ import {
   monster,
   monsterSizes,
   monsterTypes,
+  statColors,
+  statColorsDark,
+  statEmojis,
+  stats,
 } from "../types/dndTypes";
 import { StatBlockInput } from "./StatBlockInput";
 import AttackInput from "./AttackInput";
 import FormBottomBar from "./FormBottomBar";
+import { Form } from "react-router-dom";
 
 type MonsterFormProps = {
   monster?: monster; // Optional for editing
@@ -44,6 +49,7 @@ export const MonsterForm: React.FC<MonsterFormProps> = ({
       speed: 30,
       proficiencyBonus: 2,
       stats: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
+      spellcastingAbility: undefined,
       damageResistances: {},
       damageImmunities: {},
       conditionImmunities: {},
@@ -168,6 +174,23 @@ export const MonsterForm: React.FC<MonsterFormProps> = ({
         statBlock={monsterDetails.stats}
         onChange={(stat, value) => handleStatInputChange(stat, value)}
       />
+      <FormControl>
+        <FormLabel>Spellcasting Ability</FormLabel>
+        <Select
+          value={monsterDetails.spellcastingAbility}
+          onChange={(e) =>
+            handleInputChange("spellcastingAbility", e.target.value)
+          }
+          borderColor={statColors[monsterDetails.spellcastingAbility] || ""}
+        >
+          <option value={undefined}>None</option>
+          {Object.keys(monsterDetails.stats).map((stat) => (
+            <option key={stat} value={stat}>
+              {statEmojis[stat]} {stats[stat]}
+            </option>
+          ))}
+        </Select>
+      </FormControl>
       <AttackInput
         attacks={monsterDetails.attacks}
         onSave={(attacks) => handleInputChange("attacks", attacks)}

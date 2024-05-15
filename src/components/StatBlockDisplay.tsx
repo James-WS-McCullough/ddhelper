@@ -3,6 +3,8 @@ import {
   FormControl,
   FormLabel,
   Grid,
+  HStack,
+  IconButton,
   NumberInput,
   NumberInputField,
   SimpleGrid,
@@ -17,14 +19,23 @@ import {
   statEmojis,
   stats,
 } from "../types/dndTypes";
-import { calculateStatModifier } from "../generics/dndHelpers";
+import {
+  calculateStatModifier,
+  rollD20,
+  toastARoll,
+} from "../generics/dndHelpers";
+import { D20OutlineIcon } from "../assets/D20OutlineIcon";
+import { TwoD20OutlineIcon } from "../assets/TwoD20OutlineIcon";
+import RollButtons from "./RollButtons";
 
 type StatBlockDisplayProps = {
   statBlock: statBlock;
+  toast: any;
 };
 
 export const StatBlockDisplay: React.FC<StatBlockDisplayProps> = ({
   statBlock,
+  toast,
 }) => {
   return (
     <SimpleGrid
@@ -50,6 +61,11 @@ export const StatBlockDisplay: React.FC<StatBlockDisplayProps> = ({
             {statEmojis[key]} {key}: {statBlock[key]} (+
             {calculateStatModifier(statBlock[key])})
           </Text>
+          <RollButtons
+            toast={toast}
+            modifier={calculateStatModifier(statBlock[key])}
+            size="sm"
+          />
         </Box>
       ))}
     </SimpleGrid>

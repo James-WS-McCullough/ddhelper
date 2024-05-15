@@ -19,21 +19,29 @@ import {
   UtilityAttack,
   creature,
   Attack,
+  monster,
 } from "../types/dndTypes"; // Ensure proper import paths
-import { diceArrayToString, rollDiceArray } from "../generics/dndHelpers";
+import {
+  calculateSpellsaveDC,
+  diceArrayToString,
+  rollDiceArray,
+} from "../generics/dndHelpers";
 import CasinoIcon from "@mui/icons-material/Casino";
 import { ToHitModal } from "./ToHitModal";
 
 type AttackDisplayProps = {
   attack: Attack;
   targets: creature[];
+  monster: monster;
+  toast: any;
 };
 
 export const AttackDisplay: React.FC<AttackDisplayProps> = ({
   attack,
   targets,
+  monster,
+  toast,
 }) => {
-  const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const renderAttackDetails = (attack: BaseAttack) => {
@@ -50,7 +58,9 @@ export const AttackDisplay: React.FC<AttackDisplayProps> = ({
         }, Damage: ${diceArrayToString(ranged.damage)}`;
       case "Spell":
         const spell = attack as SpellAttack;
-        return `Spell DC: ${spell.spellSaveDC}, Effect: ${spell.effectDescription}`;
+        return `Spell DC: ${calculateSpellsaveDC(monster)}, Effect: ${
+          spell.effectDescription
+        }`;
       case "AoE":
         const aoe = attack as AoEAttack;
         return `Range: ${aoe.range}, Effect: ${aoe.effectDescription}`;
@@ -99,6 +109,7 @@ export const AttackDisplay: React.FC<AttackDisplayProps> = ({
       <ToHitModal
         targets={targets}
         attack={attack}
+        monster={monster}
         isOpen={isOpen}
         onClose={onClose}
         toast={toast}

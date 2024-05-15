@@ -93,7 +93,8 @@ export interface RangedAttack extends BaseAttack {
 
 export interface SpellAttack extends BaseAttack {
   subType: SpellSubType;
-  spellSaveDC?: string;
+  range: string;
+  targets: string;
   effectDescription: string;
 }
 
@@ -356,6 +357,7 @@ export interface monster {
   speed: number;
   proficiencyBonus: number;
   stats: statBlock;
+  spellcastingAbility?: stats;
   attacks: Attack[];
   damageResistances: {
     [key in damageTypes]?: number;
