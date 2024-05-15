@@ -91,6 +91,28 @@ export const EncounterForm: React.FC<EncounterFormProps> = ({
     );
   };
 
+  const onExportEncounter = () => {
+    // Download a .txt file with the encounter data as JSON
+    const data = JSON.stringify({ name, monsters }, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+
+    // Create a URL for the blob
+    const url = URL.createObjectURL(blob);
+
+    // Create a link element
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${encounter.name} Encounter.txt`; // Set the file name for the download
+
+    // Append the link to the body, trigger the download, then remove the link
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Revoke the blob URL to free up resources
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <Box>
       <FormControl>
@@ -150,6 +172,9 @@ export const EncounterForm: React.FC<EncounterFormProps> = ({
         ))}
         <Button colorScheme="green" onClick={openMonsterModalToAdd}>
           Add Monster
+        </Button>
+        <Button colorScheme="blue" onClick={onExportEncounter}>
+          Export Encounter
         </Button>
       </VStack>
       <FormBottomBar

@@ -80,11 +80,52 @@ export const EncounterManager: React.FC = () => {
     onClose();
   };
 
+  // Select a txt file to upload to import encounters
+  const handleImportEncounter = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const importedEncounter = JSON.parse(text);
+
+      if (!importedEncounter.monsters || !importedEncounter.name) {
+        alert("Invalid encounter format");
+        return;
+      }
+
+      importedEncounter.id = Date.now().toString();
+
+      setEncounters((prev) => {
+        const newEncounters = [...prev, importedEncounter];
+        saveEncountersToStorage(newEncounters);
+        return newEncounters;
+      });
+    } catch (error) {
+      alert("Error importing encounter.");
+      return;
+    }
+  };
+
   return (
     <Box p={4}>
-      <Button mb={4} colorScheme="blue" onClick={openModalToAdd}>
-        Create New Encounter
-      </Button>
+      <HStack mb={4}>
+        <Button colorScheme="blue" onClick={openModalToAdd}>
+          Create New Encounter
+        </Button>
+        <Button colorScheme="teal" as="label" htmlFor="encounter-upload">
+          Import Encounter
+        </Button>
+        <input
+          type="file"
+          accept=".txt"
+          onChange={handleImportEncounter}
+          style={{ display: "none" }}
+          id="encounter-upload"
+        />
+      </HStack>
       <VStack>
         {encounters.map((encounter) => (
           <HStack
