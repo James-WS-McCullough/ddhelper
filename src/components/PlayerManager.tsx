@@ -92,8 +92,8 @@ export const PlayerManager: React.FC = () => {
             shadow="md"
             borderWidth="1px"
             borderColor={player.isEnabled ? "white" : "gray.400"}
-            borderRadius={5}
             backgroundColor={player.isEnabled ? "green.800" : "gray.700"}
+            borderRadius={5}
             width="100%"
             justifyContent="space-between"
           >

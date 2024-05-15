@@ -335,6 +335,7 @@ export interface participant {
   initiative: number;
   creature?: creature;
   combatants?: combatant[];
+  isEnabled: boolean;
 }
 
 export type combatant = {

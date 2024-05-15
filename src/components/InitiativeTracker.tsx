@@ -48,6 +48,8 @@ import HeartBrokenIcon from "@mui/icons-material/HeartBroken";
 import EditIcon from "@mui/icons-material/Edit";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
+import ToggleOnIcon from "@mui/icons-material/ToggleOn";
+import ToggleOffIcon from "@mui/icons-material/ToggleOff";
 import { CreatureDisplay } from "./MonsterDisplay";
 
 const InitiativeTracker: React.FC = () => {
@@ -105,6 +107,7 @@ const InitiativeTracker: React.FC = () => {
             initiative: rollD20() + calculateStatModifier(monster.stats.DEX),
             creature: monster,
             combatants,
+            isEnabled: true,
           };
         }
       );
@@ -123,9 +126,10 @@ const InitiativeTracker: React.FC = () => {
   const handleAddParticipant = (): void => {
     if (!newParticipant || newInitiative === "") return; // Prevent adding empty values
     const participant: participant = {
-      id: Date.now(), // simple unique identifier
+      id: Date.now() + Math.random(), // Ensure unique ID
       name: newParticipant,
       initiative: parseInt(newInitiative, 10),
+      isEnabled: true,
     };
     setParticipants((prev) => {
       const newParticipants = [...prev, participant];
@@ -138,6 +142,22 @@ const InitiativeTracker: React.FC = () => {
     saveInitiativeToStorage({ participants, currentParticipant });
     setNewParticipant("");
     setNewInitiative("");
+  };
+
+  const handleToggleParticipant = (selectedParticipant: participant): void => {
+    setParticipants((prev) => {
+      const newParticipants = prev.map((participant) => {
+        if (participant.id === selectedParticipant.id) {
+          return { ...participant, isEnabled: !participant.isEnabled };
+        }
+        return participant;
+      });
+      saveInitiativeToStorage({
+        participants: newParticipants,
+        currentParticipant,
+      });
+      return newParticipants;
+    });
   };
 
   const handleRemoveParticipant = (id: number): void => {
@@ -186,25 +206,62 @@ const InitiativeTracker: React.FC = () => {
     const currentIndex = participants.findIndex(
       (participant) => participant.id === currentParticipant.id
     );
-    if (currentIndex === participants.length - 1) {
-      setCurrentParticipant(() => {
-        const newCurrentParticipant = participants[0];
-        saveInitiativeToStorage({
-          participants,
-          currentParticipant: newCurrentParticipant,
-        });
-        return newCurrentParticipant;
+
+    setCurrentParticipant(() => {
+      // Fomd next enabled participant
+      let newCurrentParticipant = participants.find(
+        (participant, index) => index > currentIndex && participant.isEnabled
+      );
+
+      if (!newCurrentParticipant) {
+        newCurrentParticipant = participants.find(
+          (participant) => participant.isEnabled
+        );
+      }
+
+      saveInitiativeToStorage({
+        participants,
+        currentParticipant: newCurrentParticipant,
       });
-    } else {
-      setCurrentParticipant(() => {
-        const newCurrentParticipant = participants[currentIndex + 1];
-        saveInitiativeToStorage({
-          participants,
-          currentParticipant: newCurrentParticipant,
+      return newCurrentParticipant;
+    });
+  };
+
+  const handlePreviousInitiative = (): void => {
+    if (!currentParticipant) {
+      if (participants.length > 0) {
+        setCurrentParticipant(() => {
+          const newCurrentParticipant = participants[0];
+          saveInitiativeToStorage({
+            participants,
+            currentParticipant: newCurrentParticipant,
+          });
+          return newCurrentParticipant;
         });
-        return newCurrentParticipant;
-      });
+      }
+      return;
     }
+    const currentIndex = participants.findIndex(
+      (participant) => participant.id === currentParticipant.id
+    );
+    setCurrentParticipant(() => {
+      // Find previous enabled participant
+      let newCurrentParticipant = participants
+        .slice(0, currentIndex)
+        .reverse()
+        .find((participant) => participant.isEnabled);
+
+      if (!newCurrentParticipant) {
+        newCurrentParticipant = participants
+          .reverse()
+          .find((participant) => participant.isEnabled);
+      }
+      saveInitiativeToStorage({
+        participants,
+        currentParticipant: newCurrentParticipant,
+      });
+      return newCurrentParticipant;
+    });
   };
 
   const handleClear = (): void => {
@@ -229,6 +286,7 @@ const InitiativeTracker: React.FC = () => {
             name: player.name,
             initiative: 0,
             creature: player,
+            isEnabled: true,
           } as participant)
       );
     // Add participants to state
@@ -302,7 +360,9 @@ const InitiativeTracker: React.FC = () => {
             <HStack
               key={participant.id}
               backgroundColor={
-                !participant.creature
+                !participant?.isEnabled
+                  ? "gray.700"
+                  : !participant.creature
                   ? currentParticipant === participant
                     ? "green.500"
                     : "green.800"
@@ -312,9 +372,11 @@ const InitiativeTracker: React.FC = () => {
               }
               padding={3}
               borderRadius="md"
-              border="1px solid"
+              borderWidth="1px"
+              borderColor={participant.isEnabled ? "white" : "gray.500"}
               justifyContent={"space-between"}
               width="100%"
+              textColor={participant.isEnabled ? "white" : "gray.400"}
             >
               <HStack>
                 <Input
@@ -444,6 +506,14 @@ const InitiativeTracker: React.FC = () => {
                   />
                 )}
                 <IconButton
+                  icon={
+                    participant.isEnabled ? <ToggleOnIcon /> : <ToggleOffIcon />
+                  }
+                  colorScheme="orange"
+                  aria-label="Toggle participant"
+                  onClick={() => handleToggleParticipant(participant)}
+                />
+                <IconButton
                   icon={<DeleteIcon />}
                   colorScheme="red"
                   aria-label="Remove participant"
@@ -459,6 +529,9 @@ const InitiativeTracker: React.FC = () => {
           </Text>
           <Button colorScheme="green" onClick={handleNextInitiative}>
             Next
+          </Button>
+          <Button colorScheme="green" onClick={handlePreviousInitiative}>
+            Previous
           </Button>
           <Button colorScheme="blue" onClick={handleAddPlayers}>
             Add Players
