@@ -89,7 +89,6 @@ export interface RangedAttack extends BaseAttack {
   toHit: string;
   shortRange: string;
   longRange: string;
-  targets: string;
 }
 
 export interface SpellAttack extends BaseAttack {
@@ -355,9 +354,9 @@ export interface monster {
   armorClass: number;
   maxHitPoints: number;
   speed: number;
+  proficiencyBonus: number;
   stats: statBlock;
   attacks: Attack[];
-  //skills: skillBlock;
   damageResistances: {
     [key in damageTypes]?: number;
   };
@@ -417,3 +416,26 @@ export const classes = {
 };
 
 export type classes = typeof classes[keyof typeof classes];
+
+export const playerProficiencyBonus = {
+  1: 2,
+  2: 2,
+  3: 2,
+  4: 2,
+  5: 3,
+  6: 3,
+  7: 3,
+  8: 3,
+  9: 4,
+  10: 4,
+  11: 4,
+  12: 4,
+  13: 5,
+  14: 5,
+  15: 5,
+  16: 5,
+  17: 6,
+  18: 6,
+  19: 6,
+  20: 6,
+};

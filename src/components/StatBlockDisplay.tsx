@@ -17,6 +17,7 @@ import {
   statEmojis,
   stats,
 } from "../types/dndTypes";
+import { calculateStatModifier } from "../generics/dndHelpers";
 
 type StatBlockDisplayProps = {
   statBlock: statBlock;
@@ -46,7 +47,8 @@ export const StatBlockDisplay: React.FC<StatBlockDisplayProps> = ({
           borderColor={statColors[key]}
         >
           <Text fontWeight="bold">
-            {statEmojis[key]} {key}: {statBlock[key]}
+            {statEmojis[key]} {key}: {statBlock[key]} (+
+            {calculateStatModifier(statBlock[key])})
           </Text>
         </Box>
       ))}

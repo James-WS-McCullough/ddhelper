@@ -13,7 +13,7 @@ import {
   HStack,
   IconButton,
 } from "@chakra-ui/react";
-import { Attack, MeleeAttack, creature } from "../types/dndTypes";
+import { Attack, MeleeAttack, RangedAttack, creature } from "../types/dndTypes";
 import {
   rollD20,
   rollDiceArray,
@@ -42,7 +42,9 @@ export const ToHitModal = ({
 }: ToHitModalProps) => {
   const handleAttackTarget = (target, rollType) => {
     const d20Result = rollD20(rollType);
-    const result = d20Result + parseInt((attack as MeleeAttack).toHit);
+    const result =
+      d20Result +
+      parseInt((attack as MeleeAttack).toHit || (attack as RangedAttack).toHit);
     const isSuccess =
       d20Result === 20 || (d20Result != 1 && result >= target.armorClass);
     const isCriticalSuccess = d20Result === 20;

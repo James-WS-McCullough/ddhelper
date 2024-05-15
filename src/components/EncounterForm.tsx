@@ -53,7 +53,7 @@ export const EncounterForm: React.FC<EncounterFormProps> = ({
   };
 
   const handleSaveMonster = (monster: monsterGroup) => {
-    monster.count = 1;
+    monster.count = monster.count || 1;
 
     setMonsters((prev) => {
       const index = prev.findIndex((m) => m.id === monster.id);

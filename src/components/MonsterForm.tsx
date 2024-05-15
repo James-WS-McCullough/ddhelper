@@ -42,6 +42,7 @@ export const MonsterForm: React.FC<MonsterFormProps> = ({
       armorClass: 10,
       maxHitPoints: 10,
       speed: 30,
+      proficiencyBonus: 2,
       stats: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
       damageResistances: {},
       damageImmunities: {},
@@ -155,11 +156,11 @@ export const MonsterForm: React.FC<MonsterFormProps> = ({
         />
       </FormControl>
       <FormControl>
-        <FormLabel>Challenge Rating</FormLabel>
+        <FormLabel>Proficiency Bonus</FormLabel>
         <Input
-          value={monsterDetails.challengeRating}
+          value={monsterDetails.proficiencyBonus}
           onChange={(e) =>
-            handleInputChange("challengeRating", parseFloat(e.target.value))
+            handleInputChange("proficiencyBonus", parseInt(e.target.value))
           }
         />
       </FormControl>

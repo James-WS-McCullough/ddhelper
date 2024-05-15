@@ -23,7 +23,6 @@ import {
 import { diceArrayToString, rollDiceArray } from "../generics/dndHelpers";
 import CasinoIcon from "@mui/icons-material/Casino";
 import { ToHitModal } from "./ToHitModal";
-import { D20Icon } from "../assets/D20icon";
 
 type AttackDisplayProps = {
   attack: Attack;
@@ -48,9 +47,7 @@ export const AttackDisplay: React.FC<AttackDisplayProps> = ({
         const ranged = attack as RangedAttack;
         return `To Hit: ${ranged.toHit}, Range: ${ranged.shortRange}/${
           ranged.longRange
-        }, Targets: ${ranged.targets}, Damage: ${diceArrayToString(
-          ranged.damage
-        )}`;
+        }, Damage: ${diceArrayToString(ranged.damage)}`;
       case "Spell":
         const spell = attack as SpellAttack;
         return `Spell DC: ${spell.spellSaveDC}, Effect: ${spell.effectDescription}`;
@@ -77,22 +74,22 @@ export const AttackDisplay: React.FC<AttackDisplayProps> = ({
   };
 
   return (
-    <VStack width="100%">
-      <HStack
-        spacing={4}
-        padding={2}
-        bg="purple.800"
-        borderRadius="md"
-        borderWidth={1}
-        alignItems="center"
-        width={"100%"}
-      >
+    <VStack
+      width="100%"
+      bg="purple.800"
+      borderRadius="md"
+      borderWidth={1}
+      padding={2}
+    >
+      <HStack spacing={4} alignItems="center" width={"100%"}>
         <Text fontWeight="bold">{attack.name}</Text>
         <Text flex="1">{renderAttackDetails(attack)}</Text>
         <HStack>
-          <Button colorScheme="blue" onClick={onOpen}>
-            To Hit
-          </Button>
+          {attack.type === "Melee" || attack.type === "Ranged" ? (
+            <Button colorScheme="blue" onClick={onOpen}>
+              To Hit
+            </Button>
+          ) : null}
           <Button colorScheme="red" onClick={handleRollDamage}>
             Damage
           </Button>

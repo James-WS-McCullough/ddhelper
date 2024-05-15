@@ -463,7 +463,13 @@ const InitiativeTracker: React.FC = () => {
           <Button colorScheme="blue" onClick={handleAddPlayers}>
             Add Players
           </Button>
-          <Button colorScheme="blue" onClick={onOpen}>
+          <Button
+            colorScheme="blue"
+            onClick={() => {
+              setEncounters(loadEncountersFromStorage());
+              onOpen();
+            }}
+          >
             Add Encounter
           </Button>
           <Button colorScheme="red" onClick={handleClear}>
