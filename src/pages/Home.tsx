@@ -31,7 +31,10 @@ export default function Home2() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [selectedPortraits, setSelectedPortraits] = useState([]);
   const [droppedImages, setDroppedImages] = useState([]);
+  const [droppedVideos, setDroppedVideos] = useState([]);
   const [showNames, setShowNames] = useState(false);
+  const [blackOverlay, setBlackOverlay] = useState(false);
+  const [currentlyPlayingVideo, setCurrentlyPlayingVideo] = useState(null);
 
   const handlePopup = () => {
     if (!popupWindow || popupWindow.closed) {
@@ -43,6 +46,16 @@ export default function Home2() {
       setPopupWindow(win);
       setSelectedLocation(null);
       setSelectedPortraits([]);
+    }
+  };
+
+  const selectNewSelectedLocation = (index) => {
+    if (selectedLocation === index) {
+      setSelectedLocation(null);
+    } else {
+      setSelectedLocation(index);
+      if (currentlyPlayingVideo != null && currentlyPlayingVideo?.isBackground)
+        clearVideo();
     }
   };
 
@@ -58,14 +71,10 @@ export default function Home2() {
 
       const locationSrc =
         selectedLocation !== null ? locationImages[selectedLocation].src : null;
-      const portraitsSrcs = selectedPortraits.map(
-        (index) => (
-          {
-          src: portraitImages[index].src,
-          name: portraitImages[index].file.name
-        }
-      )
-      );
+      const portraitsSrcs = selectedPortraits.map((index) => ({
+        src: portraitImages[index].src,
+        name: portraitImages[index].file.name,
+      }));
 
       // Now, every time scores, location, or portrait selections change, send the data to the popup
       const message = {
@@ -75,11 +84,41 @@ export default function Home2() {
           locationSrc,
           portraitsSrcs,
           showNames,
+          blackOverlay,
         },
       };
       popupWindow.postMessage(message, "*");
     }
-  }, [scores, selectedLocation, selectedPortraits, popupWindow, showNames]);
+  }, [
+    scores,
+    selectedLocation,
+    selectedPortraits,
+    popupWindow,
+    showNames,
+    blackOverlay,
+  ]);
+
+  const playVideo = (filename) => {
+    const video = droppedVideos.find((video) => video.file.name === filename);
+    // Sent the video to the popup
+    const message = {
+      type: "VIDEO_PLAY",
+      data: {
+        src: video.src,
+        isBackground: video.isBackground,
+      },
+    };
+    popupWindow.postMessage(message, "*");
+    setCurrentlyPlayingVideo(video);
+  };
+
+  const clearVideo = () => {
+    const message = {
+      type: "VIDEO_CLEAR",
+    };
+    popupWindow.postMessage(message, "*");
+    setCurrentlyPlayingVideo(null);
+  };
 
   return (
     <VStack
@@ -138,13 +177,20 @@ export default function Home2() {
               >
                 <ImageDropper
                   selectedLocation={selectedLocation}
-                  setSelectedLocation={setSelectedLocation}
+                  setSelectedLocation={selectNewSelectedLocation}
                   selectedPortraits={selectedPortraits}
                   setSelectedPortraits={setSelectedPortraits}
                   droppedImages={droppedImages}
                   setDroppedImages={setDroppedImages}
                   setShowNames={setShowNames}
                   showNames={showNames}
+                  droppedVideos={droppedVideos}
+                  setDroppedVideos={setDroppedVideos}
+                  playVideo={playVideo}
+                  clearVideo={clearVideo}
+                  currentlyPlayingVideo={currentlyPlayingVideo}
+                  blackOverlay={blackOverlay}
+                  setBlackOverlay={setBlackOverlay}
                 />
               </Box>
             </HStack>

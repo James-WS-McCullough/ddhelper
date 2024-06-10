@@ -8,6 +8,12 @@ export const parseFilename = (filename: string) => {
   // Check for '_location' or 'location' at the end and remove it
   baseName = baseName.replace(/_?location$/, "");
 
+  // Check for _ at the beginning and replace it with (???)
+  baseName = baseName.replace(/^_/, "(???)");
+
+  // Replace any remaining underscores with spaces
+  baseName = baseName.replace(/_/g, " ");
+
   return baseName;
 };
 

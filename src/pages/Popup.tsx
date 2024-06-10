@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Image, Box, Text, SimpleGrid } from '@chakra-ui/react';
-import ScoreDisplay from './ScoreDisplay';
-import { parseFilename } from '../generics/parseFilename';
+import React, { useState, useEffect, useRef } from "react";
+import { Image, Box, Text, SimpleGrid } from "@chakra-ui/react";
+import ScoreDisplay from "./ScoreDisplay";
+import { parseFilename } from "../generics/parseFilename";
 
 type portrait = {
   src: string;
@@ -13,90 +13,201 @@ const Popup = () => {
   const [portraitsSrcs, setPortraitsSrcs] = useState([] as portrait[]);
   const [receivedScores, setReceivedScores] = useState([]);
   const [showNames, setShowNames] = useState(false);
+  const videoRef = useRef(null);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [videoIsBackground, setVideoIsBackground] = useState(false);
+  const [useBlackOverlay, setUseBlackOverlay] = useState(false);
+  const [overlayOpacity, setOverlayOpacity] = useState(0.5);
 
   useEffect(() => {
     const handleMessage = (event) => {
-        if (event.data.type === "DATA_UPDATE") {
-            setReceivedScores(event.data.data.scores);
-            setLocationSrc(event.data.data.locationSrc);
-            setPortraitsSrcs(event.data.data.portraitsSrcs);
-            setShowNames(event.data.data.showNames);
+      if (event.data.type === "DATA_UPDATE") {
+        setReceivedScores(event.data.data.scores);
+        setLocationSrc(event.data.data.locationSrc);
+        setPortraitsSrcs(event.data.data.portraitsSrcs);
+        setShowNames(event.data.data.showNames);
+        setUseBlackOverlay(event.data.data.blackOverlay);
+      }
+      if (event.data.type === "VIDEO_PLAY") {
+        if (videoRef.current) {
+          setVideoIsBackground(event.data.data.isBackground);
+          videoRef.current.src = event.data.data.src;
+          videoRef.current.loop = event.data.data.isBackground;
+          videoRef.current.play();
+          setIsVideoPlaying(true);
         }
+      }
+      if (event.data.type === "VIDEO_CLEAR") {
+        if (videoRef.current) {
+          videoRef.current.src = "";
+          setIsVideoPlaying(false);
+        }
+      }
     };
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-}, []);
+  }, []);
 
-const renderPortraits = () => {
-  const numPortraits = portraitsSrcs.length;
+  // useEffect to hide the video after it finishes playing
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.onended = () => {
+        videoRef.current.src = "";
+        setIsVideoPlaying(false);
+        setOverlayOpacity(1);
+      };
+    }
+  }, [videoRef]);
 
-  // If 4 or more images, just render them in a grid
-  if (numPortraits >= 4) {
+  // Use effect to slowly brighten/darken the overlay to match the useBlackOverlay state over 3 seconds
+  useEffect(() => {
+    if (useBlackOverlay) {
+      const interval = setInterval(() => {
+        setOverlayOpacity((prev) => {
+          if (prev < 1) {
+            return Math.min(prev + 0.01, 1);
+          }
+          return 1;
+        });
+      }, 30);
+      return () => clearInterval(interval);
+    } else {
+      const interval = setInterval(() => {
+        setOverlayOpacity((prev) => {
+          if (prev > 0) {
+            return Math.max(prev - 0.01, 0);
+          }
+          return 0;
+        });
+      }, 30);
+      return () => clearInterval(interval);
+    }
+  }, [useBlackOverlay]);
+
+  const renderPortraits = () => {
+    const numPortraits = portraitsSrcs.length;
+
+    // If 4 or more images, just render them in a grid
+    if (numPortraits >= 4) {
       return (
-          <Box display="flex" flexWrap="wrap" justifyContent="center">
-              {portraitsSrcs.map((portrait, index) => (
-                  <Box key={index} flexBasis={{ base: "50%", md: "25%" }} p={2}>
-                      <img src={portrait.src} alt={`Portrait ${index}`} style={{ width: '100%', height: 'auto' }} />
-                      { showNames && 
-                      <Text padding="1" fontSize="2xl" textAlign="center" background="RGBA(0, 0, 0, 0.64)" borderBottomRadius="5">{parseFilename(portrait.name)}</Text>
-                      }
-                  </Box>
-              ))}
-          </Box>
-      );
-  }
-
-  // For 1-3 images, render them as larger images centered on the screen
-  return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="80%">
+        <Box display="flex" flexWrap="wrap" justifyContent="center" zIndex="10">
           {portraitsSrcs.map((portrait, index) => (
-                <Box key={index} flexBasis="100%" p={2}>
-                <img src={portrait.src} alt={`Portrait ${index}`} style={{ maxWidth: '100%', maxHeight: '80vh' }} />
-                { showNames && 
-                <Text padding="1" fontSize="2xl" textAlign="center" background="RGBA(0, 0, 0, 0.64)" borderBottomRadius="5">{parseFilename(portrait.name)}</Text>
-                }
+            <Box key={index} flexBasis={{ base: "50%", md: "25%" }} p={2}>
+              <img
+                src={portrait.src}
+                alt={`Portrait ${index}`}
+                style={{ width: "100%", height: "auto" }}
+              />
+              {showNames && !(portrait.name[0] === "_") && (
+                <Text
+                  padding="1"
+                  fontSize="2xl"
+                  textAlign="center"
+                  background="RGBA(0, 0, 0, 0.64)"
+                  borderBottomRadius="5"
+                  textColor="white"
+                >
+                  {parseFilename(portrait.name)}
+                </Text>
+              )}
             </Box>
           ))}
+        </Box>
+      );
+    }
+
+    // For 1-3 images, render them as larger images centered on the screen
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="80%"
+        zIndex="10"
+      >
+        {portraitsSrcs.map((portrait, index) => (
+          <Box key={index} flexBasis="100%" p={2}>
+            <img
+              src={portrait.src}
+              alt={`Portrait ${index}`}
+              style={{ maxWidth: "100%", maxHeight: "80vh" }}
+            />
+            {showNames && (
+              <Text
+                padding="1"
+                fontSize="2xl"
+                textAlign="center"
+                background="RGBA(0, 0, 0, 0.64)"
+                textColor="white"
+                borderBottomRadius="5"
+              >
+                {!(portrait.name[0] === "_")
+                  ? parseFilename(portrait.name)
+                  : "???"}
+              </Text>
+            )}
+          </Box>
+        ))}
       </Box>
-  );
-};
+    );
+  };
 
   return (
-    <Box 
-    w="100vw" 
-    h="100vh" 
-    bg={locationSrc ? `url(${locationSrc}) center/cover no-repeat` : 'black'}
-    position="relative" 
-    display="flex"
-    alignItems="center"
-    justifyContent="center"
->
-{renderPortraits()}
-      <Box 
-    position={'absolute'} 
-    display="flex"
-    flexWrap="wrap"
-    justifyContent={receivedScores.length === 1 ? "center" : "flex-start"}
-    width="100%"
->
-  {
-    receivedScores.map(score => (
-      <Box 
-          key={score.name}
-          width={receivedScores.length === 1 ? "auto" : "50%"}
-          p={2} // this acts as spacing between the items
+    <Box
+      w="100vw"
+      h="100vh"
+      bg={locationSrc ? `url(${locationSrc}) center/cover no-repeat` : "black"}
+      position="relative"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      zIndex="0"
+    >
+      <Box
+        position="absolute"
+        width="100%"
+        height="100%"
+        bg={"black"}
+        opacity={overlayOpacity}
+        zIndex="15"
+      />
+      <Box
+        position="absolute"
+        width="100%"
+        height="100%"
+        top="50%"
+        left="50%"
+        transform="translate(-50%, -50%)"
+        zIndex={videoIsBackground ? "1" : "20"}
+        alignContent="center"
+        bg={isVideoPlaying ? "black" : "transparent"}
       >
-        <ScoreDisplay 
-          name={score.name} 
-          successes={score.successes} 
-          failures={score.failures} 
-        />
+        <video ref={videoRef} width="100%" height="100%" />
       </Box>
-    ))
-  }
-</Box>
 
+      {renderPortraits()}
+      <Box
+        position={"absolute"}
+        display="flex"
+        flexWrap="wrap"
+        justifyContent={receivedScores.length === 1 ? "center" : "flex-start"}
+        width="100%"
+      >
+        {receivedScores.map((score) => (
+          <Box
+            key={score.name}
+            width={receivedScores.length === 1 ? "auto" : "50%"}
+            p={2} // this acts as spacing between the items
+          >
+            <ScoreDisplay
+              name={score.name}
+              successes={score.successes}
+              failures={score.failures}
+            />
+          </Box>
+        ))}
+      </Box>
     </Box>
   );
 };

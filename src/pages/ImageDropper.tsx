@@ -41,6 +41,13 @@ const ImageDropper = ({
   setDroppedImages,
   setShowNames,
   showNames,
+  droppedVideos,
+  setDroppedVideos,
+  playVideo,
+  clearVideo,
+  currentlyPlayingVideo,
+  blackOverlay,
+  setBlackOverlay,
 }) => {
   const toast = useToast();
 
@@ -50,6 +57,9 @@ const ImageDropper = ({
   const portraitImages = droppedImages.filter(
     (img) => !img.file.name.includes("location")
   );
+
+  const eventVideos = droppedVideos.filter((video) => !video.isBackground);
+  const backgroundVideos = droppedVideos.filter((video) => video.isBackground);
 
   const handleImageClick = (index, isLocation) => {
     if (isLocation) {
@@ -84,30 +94,80 @@ const ImageDropper = ({
     </SimpleGrid>
   );
 
+  const displayVideos = (videos) => (
+    <SimpleGrid columns={3} spacing={4}>
+      {videos.map((fileObject, index) => (
+        <VStack
+          p={2}
+          border="1px solid gray"
+          bg="transparent"
+          cursor="pointer"
+          borderRadius="md"
+          width="150px"
+          onClick={() => playVideo(fileObject.file.name)}
+        >
+          <Text fontSize="sm">{parseFilename(fileObject.file.name)}</Text>
+          <Image
+            src={fileObject.thumbnail}
+            alt={fileObject.file.name}
+            boxSize="120px"
+            objectFit="cover"
+          />
+        </VStack>
+      ))}
+    </SimpleGrid>
+  );
+
   return (
     <VStack
       spacing={5}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => {
         e.preventDefault();
-        const files = [...e.dataTransfer.files].filter((file) =>
-          file.type.startsWith("image/")
+        const files = [...e.dataTransfer.files].filter(
+          (file) =>
+            file.type.startsWith("image/") || file.type.startsWith("video/")
         );
+
         if (files.length > 0) {
           files.forEach((file) => {
             const reader = new FileReader();
             reader.onloadend = () => {
-              setDroppedImages((prev) => [
-                ...prev,
-                { file, src: reader.result },
-              ]);
+              if (file.type.startsWith("image/")) {
+                setDroppedImages((prev) => [
+                  ...prev,
+                  { file, src: reader.result },
+                ]);
+              } else if (file.type.startsWith("video/")) {
+                const video = document.createElement("video");
+                const videoUrl = URL.createObjectURL(file);
+                video.src = videoUrl;
+                video.currentTime = 1;
+                video.addEventListener("loadeddata", () => {
+                  const canvas = document.createElement("canvas");
+                  canvas.width = 150; // thumbnail width
+                  canvas.height = 100; // thumbnail height
+                  const ctx = canvas.getContext("2d");
+                  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                  const thumbnail = canvas.toDataURL();
+                  setDroppedVideos((prev) => [
+                    ...prev,
+                    {
+                      file,
+                      src: videoUrl,
+                      thumbnail,
+                      isBackground: file.name.includes("location"),
+                    },
+                  ]);
+                });
+              }
             };
             reader.readAsDataURL(file);
           });
         } else {
           toast({
-            title: "No image files found",
-            description: "Please drop valid image files.",
+            title: "No valid files found",
+            description: "Please drop valid image or video files.",
             status: "error",
             duration: 5000,
             isClosable: true,
@@ -127,27 +187,33 @@ const ImageDropper = ({
       ) : (
         <>
           <VStack>
-          <Text fontSize="xl">General</Text>
-          <HStack>
-
-            <Button
-              ml={4}
-              onClick={() => setShowNames(!showNames)}
-              colorScheme={showNames ? "red" : "green"}
-            >
-              {showNames ? "Hide Names" : "Show Names"}
-            </Button>
-            <Button
-              ml={4}
-              onClick={() => {
-                setSelectedLocation(null);
-                setSelectedPortraits([]);
-              }}
-              colorScheme="red"
-            >
-              Clear All
-            </Button>
-          </HStack>
+            <Text fontSize="xl">General</Text>
+            <HStack>
+              <Button
+                ml={4}
+                onClick={() => setShowNames(!showNames)}
+                colorScheme={showNames ? "red" : "green"}
+              >
+                {showNames ? "Hide Names" : "Show Names"}
+              </Button>
+              <Button
+                ml={4}
+                onClick={() => setBlackOverlay(!blackOverlay)}
+                colorScheme={blackOverlay ? "green" : "red"}
+              >
+                {blackOverlay ? "Reveal All" : "Hide All"}
+              </Button>
+              <Button
+                ml={4}
+                onClick={() => {
+                  setSelectedLocation(null);
+                  setSelectedPortraits([]);
+                }}
+                colorScheme="red"
+              >
+                Clear All
+              </Button>
+            </HStack>
           </VStack>
           {locationImages.length > 0 && (
             <>
@@ -176,6 +242,40 @@ const ImageDropper = ({
                 Clear
               </Button>
               {displayImages(portraitImages, false)}
+            </>
+          )}
+          {backgroundVideos.length > 0 && (
+            <>
+              <Text fontSize="xl" mt={8}>
+                Video Backgrounds
+              </Text>
+              {currentlyPlayingVideo && (
+                <Button
+                  mb={4}
+                  onClick={clearVideo}
+                  colorScheme="red"
+                  isDisabled={backgroundVideos.length === 0}
+                >
+                  Clear
+                </Button>
+              )}
+              {displayVideos(backgroundVideos)}
+            </>
+          )}
+          {eventVideos.length > 0 && (
+            <>
+              <Text fontSize="xl" mt={8}>
+                Event Videos
+              </Text>
+              <Button
+                mb={4}
+                onClick={clearVideo}
+                colorScheme="red"
+                isDisabled={backgroundVideos.length === 0}
+              >
+                Clear
+              </Button>
+              {displayVideos(eventVideos)}
             </>
           )}
         </>
