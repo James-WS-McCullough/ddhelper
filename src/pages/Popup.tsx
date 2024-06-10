@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Image, Box, SimpleGrid } from '@chakra-ui/react';
+import { Image, Box, Text, SimpleGrid } from '@chakra-ui/react';
 import ScoreDisplay from './ScoreDisplay';
+import { parseFilename } from '../generics/parseFilename';
+
+type portrait = {
+  src: string;
+  name: string;
+};
 
 const Popup = () => {
   const [locationSrc, setLocationSrc] = useState(null);
-  const [portraitsSrcs, setPortraitsSrcs] = useState([]);
+  const [portraitsSrcs, setPortraitsSrcs] = useState([] as portrait[]);
   const [receivedScores, setReceivedScores] = useState([]);
+  const [showNames, setShowNames] = useState(false);
 
   useEffect(() => {
     const handleMessage = (event) => {
@@ -13,6 +20,7 @@ const Popup = () => {
             setReceivedScores(event.data.data.scores);
             setLocationSrc(event.data.data.locationSrc);
             setPortraitsSrcs(event.data.data.portraitsSrcs);
+            setShowNames(event.data.data.showNames);
         }
     };
 
@@ -27,9 +35,12 @@ const renderPortraits = () => {
   if (numPortraits >= 4) {
       return (
           <Box display="flex" flexWrap="wrap" justifyContent="center">
-              {portraitsSrcs.map((src, index) => (
+              {portraitsSrcs.map((portrait, index) => (
                   <Box key={index} flexBasis={{ base: "50%", md: "25%" }} p={2}>
-                      <img src={src} alt={`Portrait ${index}`} style={{ width: '100%', height: 'auto' }} />
+                      <img src={portrait.src} alt={`Portrait ${index}`} style={{ width: '100%', height: 'auto' }} />
+                      { showNames && 
+                      <Text padding="1" fontSize="2xl" textAlign="center" background="RGBA(0, 0, 0, 0.64)" borderBottomRadius="5">{parseFilename(portrait.name)}</Text>
+                      }
                   </Box>
               ))}
           </Box>
@@ -39,10 +50,13 @@ const renderPortraits = () => {
   // For 1-3 images, render them as larger images centered on the screen
   return (
       <Box display="flex" justifyContent="center" alignItems="center" height="80%">
-          {portraitsSrcs.map((src, index) => (
-              <Box key={index} flexBasis="100%" p={2}>
-                  <img src={src} alt={`Portrait ${index}`} style={{ maxWidth: '100%', maxHeight: '80vh' }} />
-              </Box>
+          {portraitsSrcs.map((portrait, index) => (
+                <Box key={index} flexBasis="100%" p={2}>
+                <img src={portrait.src} alt={`Portrait ${index}`} style={{ maxWidth: '100%', maxHeight: '80vh' }} />
+                { showNames && 
+                <Text padding="1" fontSize="2xl" textAlign="center" background="RGBA(0, 0, 0, 0.64)" borderBottomRadius="5">{parseFilename(portrait.name)}</Text>
+                }
+            </Box>
           ))}
       </Box>
   );

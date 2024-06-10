@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   VStack,
+  HStack,
   Box,
   Image,
   useToast,
@@ -38,6 +39,8 @@ const ImageDropper = ({
   selectedLocation,
   droppedImages,
   setDroppedImages,
+  setShowNames,
+  showNames,
 }) => {
   const toast = useToast();
 
@@ -123,6 +126,29 @@ const ImageDropper = ({
         <Text fontSize="xl">Drop your image files here!</Text>
       ) : (
         <>
+          <VStack>
+          <Text fontSize="xl">General</Text>
+          <HStack>
+
+            <Button
+              ml={4}
+              onClick={() => setShowNames(!showNames)}
+              colorScheme={showNames ? "red" : "green"}
+            >
+              {showNames ? "Hide Names" : "Show Names"}
+            </Button>
+            <Button
+              ml={4}
+              onClick={() => {
+                setSelectedLocation(null);
+                setSelectedPortraits([]);
+              }}
+              colorScheme="red"
+            >
+              Clear All
+            </Button>
+          </HStack>
+          </VStack>
           {locationImages.length > 0 && (
             <>
               <Text fontSize="xl">Location Images</Text>

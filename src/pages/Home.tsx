@@ -31,6 +31,7 @@ export default function Home2() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [selectedPortraits, setSelectedPortraits] = useState([]);
   const [droppedImages, setDroppedImages] = useState([]);
+  const [showNames, setShowNames] = useState(false);
 
   const handlePopup = () => {
     if (!popupWindow || popupWindow.closed) {
@@ -58,7 +59,12 @@ export default function Home2() {
       const locationSrc =
         selectedLocation !== null ? locationImages[selectedLocation].src : null;
       const portraitsSrcs = selectedPortraits.map(
-        (index) => portraitImages[index].src
+        (index) => (
+          {
+          src: portraitImages[index].src,
+          name: portraitImages[index].file.name
+        }
+      )
       );
 
       // Now, every time scores, location, or portrait selections change, send the data to the popup
@@ -68,11 +74,12 @@ export default function Home2() {
           scores,
           locationSrc,
           portraitsSrcs,
+          showNames,
         },
       };
       popupWindow.postMessage(message, "*");
     }
-  }, [scores, selectedLocation, selectedPortraits, popupWindow]);
+  }, [scores, selectedLocation, selectedPortraits, popupWindow, showNames]);
 
   return (
     <VStack
@@ -136,6 +143,8 @@ export default function Home2() {
                   setSelectedPortraits={setSelectedPortraits}
                   droppedImages={droppedImages}
                   setDroppedImages={setDroppedImages}
+                  setShowNames={setShowNames}
+                  showNames={showNames}
                 />
               </Box>
             </HStack>
