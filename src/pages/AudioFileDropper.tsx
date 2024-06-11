@@ -1,172 +1,186 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
-  Box,
+  HStack,
+  VStack,
   Text,
-  Button,
   Slider,
   SliderTrack,
   SliderFilledTrack,
   SliderThumb,
-  VStack,
-  HStack,
   IconButton,
+  Button,
 } from "@chakra-ui/react";
-import { parseFilename } from "../generics/parseFilename";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import StopIcon from "@mui/icons-material/Stop";
+import { parseFilename } from "../generics/parseFilename";
 
-const AudioPlayer = ({ fileObject }) => {
-  const src = fileObject.src;
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(50);
-  const [audio, setAudio] = useState(null);
-  const FADE_DURATION = 2000;
-  const STEPS = 40;
-  const stepDuration = FADE_DURATION / STEPS;
-  const [decrementStep, setDecrementStep] = useState(volume / 100 / STEPS);
+interface FileObject {
+  file: File;
+  src: string;
+  loop: boolean;
+}
 
-  useEffect(() => {
-    const audioInstance = new Audio(src);
-    setAudio(audioInstance);
+interface AudioPlayerProps {
+  fileObject: FileObject;
+}
 
-    const handleLoop = () => {
-      if (fileObject.loop) {
-        audioInstance.currentTime = 0;
-        playAudio(); // Call the play function here
-      } else {
-        setIsPlaying(false);
-      }
-    };
+const AudioPlayer = React.forwardRef(
+  ({ fileObject }: AudioPlayerProps, ref) => {
+    const src = fileObject.src;
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [volume, setVolume] = useState(50);
+    const [audio, setAudio] = useState(null);
+    const FADE_DURATION = 2000;
+    const STEPS = 40;
+    const stepDuration = FADE_DURATION / STEPS;
+    const [decrementStep, setDecrementStep] = useState(volume / 100 / STEPS);
 
-    audioInstance.addEventListener("ended", handleLoop);
+    useEffect(() => {
+      const audioInstance = new Audio(src);
+      setAudio(audioInstance);
 
-    return () => {
-      audioInstance.pause(); // Ensure audio is paused when the component is unmounted
-      audioInstance.removeEventListener("ended", handleLoop);
-    };
-  }, [src, fileObject.loop]);
+      const handleLoop = () => {
+        if (fileObject.loop) {
+          audioInstance.currentTime = 0;
+          playAudio(); // Call the play function here
+        } else {
+          setIsPlaying(false);
+        }
+      };
 
-  const playAudio = () => {
-    if (!audio) return; // Guard clause
+      audioInstance.addEventListener("ended", handleLoop);
 
-    audio.volume = volume / 100; // Ensure we reset the volume when playing again
-    audio.play();
-    setIsPlaying(true);
-  };
-
-  const handleToggle = () => {
-    if (!audio) return; // Guard clause
-
-    if (isPlaying) {
-      if (fileObject.loop) {
-        fadeOut();
-      } else {
-        audio.pause();
-        audio.currentTime = 0;
-        setIsPlaying(false);
-      }
-    } else {
-      playAudio();
-    }
-  };
-
-  useEffect(() => {
-    const audioInstance = new Audio(src);
-    setAudio(audioInstance);
-
-    audioInstance.onended = () => {
-      if (!fileObject.loop) {
-        setIsPlaying(false);
-      }
-    };
-
-    if (fileObject.loop) {
-      audioInstance.addEventListener("ended", () => {
-        audioInstance.currentTime = 0;
-        audioInstance.play();
-      });
       return () => {
         audioInstance.pause(); // Ensure audio is paused when the component is unmounted
-        audioInstance.removeEventListener("ended", audioInstance.onended);
+        audioInstance.removeEventListener("ended", handleLoop);
       };
-    }
-  }, [src, fileObject.loop]);
+    }, [src, fileObject.loop]);
 
-  const fadeOut = () => {
-    if (!audio) return; // Guard clause
+    const playAudio = () => {
+      if (!audio) return; // Guard clause
 
-    if (audio.volume > decrementStep) {
-      audio.volume -= decrementStep;
-      setTimeout(fadeOut, stepDuration);
-    } else {
-      audio.volume = 0;
-      if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
+      audio.volume = volume / 100; // Ensure we reset the volume when playing again
+      audio.play();
+      setIsPlaying(true);
+    };
+
+    const handleToggle = () => {
+      if (!audio) return; // Guard clause
+
+      if (isPlaying) {
+        if (fileObject.loop) {
+          fadeOut();
+        } else {
+          audio.pause();
+          audio.currentTime = 0;
+          setIsPlaying(false);
+        }
+      } else {
+        playAudio();
       }
-      setIsPlaying(false);
-    }
-  };
+    };
 
-  const handleVolumeChange = (value) => {
-    setVolume(value);
-    if (audio) {
-      audio.volume = value / 100;
-      setDecrementStep(audio.volume / STEPS); // Update decrement step when volume changes
-    }
-  };
+    useEffect(() => {
+      const audioInstance = new Audio(src);
+      setAudio(audioInstance);
 
-  return (
-    <HStack
-      w="400px"
-      bg={isPlaying ? "blue.300" : fileObject.loop ? "blue.700" : "gray.700"}
-      p={5}
-      shadow="lg"
-      rounded="lg"
-      border="1px solid"
-      borderColor="gray.500"
-      spacing={8}
-    >
-      <VStack w="100%" alignItems="start">
-        <Text noOfLines={1} w="full" textAlign="left" color="white">
-          {parseFilename(fileObject.file.name)}
-        </Text>
-        <Slider
-          aria-label="volume slider"
-          defaultValue={volume}
-          min={0}
-          max={100}
-          onChange={handleVolumeChange}
-        >
-          <SliderTrack>
-            <SliderFilledTrack />
-          </SliderTrack>
-          <SliderThumb />
-        </Slider>
-      </VStack>
-      {isPlaying ? (
-        <IconButton
-          colorScheme="red"
-          onClick={handleToggle}
-          aria-label="stop"
-          icon={<StopIcon />}
-        />
-      ) : (
-        <IconButton
-          colorScheme="green"
-          onClick={handleToggle}
-          aria-label="play"
-          icon={<PlayArrowIcon />}
-        />
-      )}
-    </HStack>
-  );
-};
+      audioInstance.onended = () => {
+        if (!fileObject.loop) {
+          setIsPlaying(false);
+        }
+      };
+
+      if (fileObject.loop) {
+        audioInstance.addEventListener("ended", () => {
+          audioInstance.currentTime = 0;
+          audioInstance.play();
+        });
+        return () => {
+          audioInstance.pause(); // Ensure audio is paused when the component is unmounted
+          audioInstance.removeEventListener("ended", audioInstance.onended);
+        };
+      }
+    }, [src, fileObject.loop]);
+
+    const fadeOut = () => {
+      if (!audio) return; // Guard clause
+
+      if (audio.volume > decrementStep) {
+        audio.volume -= decrementStep;
+        setTimeout(fadeOut, stepDuration);
+      } else {
+        audio.volume = 0;
+        if (audio) {
+          audio.pause();
+          audio.currentTime = 0;
+        }
+        setIsPlaying(false);
+      }
+    };
+
+    const handleVolumeChange = (value) => {
+      setVolume(value);
+      if (audio) {
+        audio.volume = value / 100;
+        setDecrementStep(audio.volume / STEPS); // Update decrement step when volume changes
+      }
+    };
+
+    React.useImperativeHandle(ref, () => ({
+      fadeOut,
+    }));
+
+    return (
+      <HStack
+        w="400px"
+        bg={isPlaying ? "blue.300" : fileObject.loop ? "blue.700" : "gray.700"}
+        p={5}
+        shadow="lg"
+        rounded="lg"
+        border="1px solid"
+        borderColor="gray.500"
+        spacing={8}
+      >
+        <VStack w="100%" alignItems="start">
+          <Text noOfLines={1} w="full" textAlign="left" color="white">
+            {parseFilename(fileObject.file.name)}
+          </Text>
+          <Slider
+            aria-label="volume slider"
+            defaultValue={volume}
+            min={0}
+            max={100}
+            onChange={handleVolumeChange}
+          >
+            <SliderTrack>
+              <SliderFilledTrack />
+            </SliderTrack>
+            <SliderThumb />
+          </Slider>
+        </VStack>
+        {isPlaying ? (
+          <IconButton
+            colorScheme="red"
+            onClick={handleToggle}
+            aria-label="stop"
+            icon={<StopIcon />}
+          />
+        ) : (
+          <IconButton
+            colorScheme="green"
+            onClick={handleToggle}
+            aria-label="play"
+            icon={<PlayArrowIcon />}
+          />
+        )}
+      </HStack>
+    );
+  }
+);
 
 const AudioFileDropper = () => {
   const [droppedFiles, setDroppedFiles] = useState([]);
-
-  console.log("droppedFiles", droppedFiles);
+  const audioPlayersRef = useRef([]);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -205,14 +219,25 @@ const AudioFileDropper = () => {
   };
 
   const listDroppedFiles = () => {
-    return droppedFiles.map((fileObject) => {
+    return droppedFiles.map((fileObject, index) => {
       return (
         <VStack
           key={`${fileObject.file.name}-${fileObject.file.lastModified}`} // more stable key
         >
-          <AudioPlayer fileObject={fileObject} />
+          <AudioPlayer
+            fileObject={fileObject}
+            ref={(el) => (audioPlayersRef.current[index] = el)}
+          />
         </VStack>
       );
+    });
+  };
+
+  const fadeAll = () => {
+    audioPlayersRef.current.forEach((player) => {
+      if (player) {
+        player.fadeOut();
+      }
     });
   };
 
@@ -245,6 +270,14 @@ const AudioFileDropper = () => {
       flexDirection="column"
       textAlign="center"
     >
+      <VStack>
+        <Text fontSize="xl">General</Text>
+        <HStack>
+          <Button ml={4} onClick={fadeAll} colorScheme="red">
+            Fade All
+          </Button>
+        </HStack>
+      </VStack>
       {listDroppedFiles()}
     </VStack>
   );

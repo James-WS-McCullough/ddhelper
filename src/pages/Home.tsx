@@ -54,7 +54,7 @@ export default function Home2() {
       setSelectedLocation(null);
     } else {
       setSelectedLocation(index);
-      if (currentlyPlayingVideo != null && currentlyPlayingVideo?.isBackground)
+      if (currentlyPlayingVideo !== null && currentlyPlayingVideo?.isBackground)
         clearVideo();
     }
   };
@@ -110,6 +110,9 @@ export default function Home2() {
     };
     popupWindow.postMessage(message, "*");
     setCurrentlyPlayingVideo(video);
+    if (video.isBackground) {
+      setSelectedLocation(null);
+    }
   };
 
   const clearVideo = () => {

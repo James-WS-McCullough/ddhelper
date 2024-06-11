@@ -41,6 +41,8 @@ const Popup = () => {
             eventVideoRef.current.src = event.data.data.src;
             eventVideoRef.current.play();
             setIsVideoPlaying(true);
+            setUseBlackOverlay(true);
+            setOverlayOpacity(1);
           }
         }
       }
@@ -66,6 +68,7 @@ const Popup = () => {
         eventVideoRef.current.src = "";
         setIsVideoPlaying(false);
         setOverlayOpacity(1);
+        setUseBlackOverlay(false);
       };
     }
   }, [eventVideoRef]);
