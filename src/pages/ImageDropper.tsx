@@ -208,6 +208,7 @@ const ImageDropper = ({
                 onClick={() => {
                   setSelectedLocation(null);
                   setSelectedPortraits([]);
+                  clearVideo();
                 }}
                 colorScheme="red"
               >
