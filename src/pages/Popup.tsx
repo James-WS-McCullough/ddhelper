@@ -13,9 +13,9 @@ const Popup = () => {
   const [portraitsSrcs, setPortraitsSrcs] = useState([] as portrait[]);
   const [receivedScores, setReceivedScores] = useState([]);
   const [showNames, setShowNames] = useState(false);
-  const videoRef = useRef(null);
+  const backgroundVideoRef = useRef(null);
+  const eventVideoRef = useRef(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [videoIsBackground, setVideoIsBackground] = useState(false);
   const [useBlackOverlay, setUseBlackOverlay] = useState(false);
   const [overlayOpacity, setOverlayOpacity] = useState(0.5);
 
@@ -29,19 +29,29 @@ const Popup = () => {
         setUseBlackOverlay(event.data.data.blackOverlay);
       }
       if (event.data.type === "VIDEO_PLAY") {
-        if (videoRef.current) {
-          setVideoIsBackground(event.data.data.isBackground);
-          videoRef.current.src = event.data.data.src;
-          videoRef.current.loop = event.data.data.isBackground;
-          videoRef.current.play();
-          setIsVideoPlaying(true);
+        const videoIsBackgrond = event.data.data.isBackground;
+        if (videoIsBackgrond) {
+          if (backgroundVideoRef.current) {
+            backgroundVideoRef.current.src = event.data.data.src;
+            backgroundVideoRef.current.play();
+            setIsVideoPlaying(true);
+          }
+        } else {
+          if (eventVideoRef.current) {
+            eventVideoRef.current.src = event.data.data.src;
+            eventVideoRef.current.play();
+            setIsVideoPlaying(true);
+          }
         }
       }
       if (event.data.type === "VIDEO_CLEAR") {
-        if (videoRef.current) {
-          videoRef.current.src = "";
-          setIsVideoPlaying(false);
+        if (backgroundVideoRef.current) {
+          backgroundVideoRef.current.src = "";
         }
+        if (eventVideoRef.current) {
+          eventVideoRef.current.src = "";
+        }
+        setIsVideoPlaying(false);
       }
     };
 
@@ -51,14 +61,14 @@ const Popup = () => {
 
   // useEffect to hide the video after it finishes playing
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.onended = () => {
-        videoRef.current.src = "";
+    if (eventVideoRef.current) {
+      eventVideoRef.current.onended = () => {
+        eventVideoRef.current.src = "";
         setIsVideoPlaying(false);
         setOverlayOpacity(1);
       };
     }
-  }, [videoRef]);
+  }, [eventVideoRef]);
 
   // Use effect to slowly brighten/darken the overlay to match the useBlackOverlay state over 3 seconds
   useEffect(() => {
@@ -179,11 +189,44 @@ const Popup = () => {
         top="50%"
         left="50%"
         transform="translate(-50%, -50%)"
-        zIndex={videoIsBackground ? "1" : "20"}
+        zIndex="1"
         alignContent="center"
         bg={isVideoPlaying ? "black" : "transparent"}
       >
-        <video ref={videoRef} width="100%" height="100%" />
+        <video
+          ref={backgroundVideoRef}
+          width="100%"
+          height="100%"
+          loop
+          style={{
+            objectFit: "cover",
+            objectPosition: "center",
+            width: "100vw",
+            height: "100vh",
+          }}
+        />
+      </Box>
+      <Box
+        position="absolute"
+        width="100%"
+        height="100%"
+        top="50%"
+        left="50%"
+        transform="translate(-50%, -50%)"
+        zIndex="20"
+        alignContent="center"
+      >
+        <video
+          ref={eventVideoRef}
+          width="100%"
+          height="100%"
+          style={{
+            objectFit: "cover",
+            objectPosition: "center",
+            width: "100vw",
+            height: "100vh",
+          }}
+        />
       </Box>
 
       {renderPortraits()}
