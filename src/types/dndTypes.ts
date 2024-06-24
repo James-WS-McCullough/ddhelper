@@ -440,3 +440,17 @@ export const playerProficiencyBonus = {
   19: 6,
   20: 6,
 };
+
+export type faverouteEventType = {
+  id: string;
+  name: string;
+  muteSoundsOnStart: boolean;
+  soundsToPlay: string[];
+  eventVideoToPlay: string;
+  backgroundToShow: string;
+  backgroundIsVideo: boolean;
+  blackFadeOut: boolean;
+  clearCharacterPortraits: boolean;
+  characterPortraitsToShow: string[];
+  buttonColor: string;
+}
