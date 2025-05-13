@@ -36,6 +36,9 @@ import PhotoIcon from "@mui/icons-material/Photo";
 import VolumeOffIcon from "@mui/icons-material/VolumeOff";
 import PauseIcon from "@mui/icons-material/Pause";
 import LoopIcon from "@mui/icons-material/Loop";
+import LandscapeIcon from "@mui/icons-material/Landscape";
+import PeopleIcon from "@mui/icons-material/People";
+import MovieIcon from "@mui/icons-material/Movie";
 import { parseFilename } from "../../generics/parseFilename";
 
 // Type definitions
@@ -65,6 +68,12 @@ interface AudioFadeState {
   [key: string]: "fading-in" | "fading-out" | "none";
 }
 
+// Track both background and event videos separately
+interface VideoState {
+  background: VideoFile | null;
+  event: VideoFile | null;
+}
+
 interface FileManagerProps {
   // Audio props
   droppedAudioFiles: AudioFile[];
@@ -85,7 +94,7 @@ interface FileManagerProps {
   setDroppedVideos: React.Dispatch<React.SetStateAction<VideoFile[]>>;
   playVideo: (filename: string) => void;
   clearVideo: () => void;
-  currentlyPlayingVideo: VideoFile | null;
+  currentlyPlayingVideo: VideoState;
 
   // Overall display controls
   blackOverlay: boolean;
@@ -265,21 +274,33 @@ const FileManager: React.FC<FileManagerProps> = ({
   const volumeStep = 1 / FADE_STEPS;
 
   // Filter files by type
-  const locationImages = droppedImages.filter((img) =>
-    img.file.name.includes("location")
-  );
-  const portraitImages = droppedImages.filter(
-    (img) => !img.file.name.includes("location")
-  );
-  const backgroundVideos = droppedVideos.filter((video) => video.isBackground);
-  const eventVideos = droppedVideos.filter((video) => !video.isBackground);
-  const loopingSoundEffects = droppedAudioFiles.filter(
-    (audio) => audio.loop && !audio.music
-  );
-  const loopingMusic = droppedAudioFiles.filter((audio) => audio.music);
-  const soundEffects = droppedAudioFiles.filter(
-    (audio) => !audio.loop && !audio.music
-  );
+  const locationImages = droppedImages
+    .filter((img) => img.file.name.includes("location"))
+    .sort((a, b) => parseFilename(a.file.name).localeCompare(parseFilename(b.file.name)));
+  
+  const portraitImages = droppedImages
+    .filter((img) => !img.file.name.includes("location"))
+    .sort((a, b) => parseFilename(a.file.name).localeCompare(parseFilename(b.file.name)));
+  
+  const backgroundVideos = droppedVideos
+    .filter((video) => video.isBackground)
+    .sort((a, b) => parseFilename(a.file.name).localeCompare(parseFilename(b.file.name)));
+  
+  const eventVideos = droppedVideos
+    .filter((video) => !video.isBackground)
+    .sort((a, b) => parseFilename(a.file.name).localeCompare(parseFilename(b.file.name)));
+  
+  const loopingSoundEffects = droppedAudioFiles
+    .filter((audio) => audio.loop && !audio.music)
+    .sort((a, b) => parseFilename(a.file.name).localeCompare(parseFilename(b.file.name)));
+  
+  const loopingMusic = droppedAudioFiles
+    .filter((audio) => audio.music)
+    .sort((a, b) => parseFilename(a.file.name).localeCompare(parseFilename(b.file.name)));
+  
+  const soundEffects = droppedAudioFiles
+    .filter((audio) => !audio.loop && !audio.music)
+    .sort((a, b) => parseFilename(a.file.name).localeCompare(parseFilename(b.file.name)));
 
   // Handle drag and drop
   const handleDragOver = (e: React.DragEvent) => {
@@ -776,15 +797,23 @@ const FileManager: React.FC<FileManagerProps> = ({
   // Display videos in a grid
   const displayVideos = (videos: VideoFile[]) => (
     <SimpleGrid columns={{ base: 2, md: 3, lg: 4 }} spacing={3}>
-      {videos.map((fileObject, index) => (
-        <FileThumbnail
-          key={index}
-          fileObject={fileObject}
-          isSelected={currentlyPlayingVideo?.file.name === fileObject.file.name}
-          onClick={() => playVideo(fileObject.file.name)}
-          type="video"
-        />
-      ))}
+      {videos.map((fileObject, index) => {
+        // Check if this video is currently playing (in either background or event)
+        const isSelected =
+          currentlyPlayingVideo.background?.file.name ===
+            fileObject.file.name ||
+          currentlyPlayingVideo.event?.file.name === fileObject.file.name;
+
+        return (
+          <FileThumbnail
+            key={index}
+            fileObject={fileObject}
+            isSelected={isSelected}
+            onClick={() => playVideo(fileObject.file.name)}
+            type="video"
+          />
+        );
+      })}
     </SimpleGrid>
   );
 
@@ -874,7 +903,8 @@ const FileManager: React.FC<FileManagerProps> = ({
 
   // Sidebar visibility
   const hasSidebarContent =
-    currentlyPlayingVideo !== null ||
+    currentlyPlayingVideo.background !== null ||
+    currentlyPlayingVideo.event !== null ||
     activeLocationImage !== null ||
     activePortraitImages.length > 0 ||
     Object.keys(activeAudio).length > 0;
@@ -888,45 +918,8 @@ const FileManager: React.FC<FileManagerProps> = ({
       display="flex"
       flexDirection="column"
       bg="gray.900"
-      borderRadius="md"
       overflow="hidden"
     >
-      {/* Global Controls */}
-      <Flex
-        p={3}
-        bg="gray.800"
-        justifyContent="space-between"
-        alignItems="center"
-      >
-        <Heading size="md" color="white">
-          File Manager
-        </Heading>
-        <HStack spacing={2}>
-          <Button
-            size="sm"
-            onClick={() => setShowNames(!showNames)}
-            colorScheme={showNames ? "red" : "green"}
-          >
-            {showNames ? "Hide Names" : "Show Names"}
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setBlackOverlay(!blackOverlay)}
-            colorScheme={blackOverlay ? "green" : "red"}
-          >
-            {blackOverlay ? "Reveal Display" : "Hide Display"}
-          </Button>
-          <Button size="sm" onClick={clearAllSelections} colorScheme="red">
-            Clear All
-          </Button>
-          {Object.keys(activeAudio).length > 0 && (
-            <Button size="sm" onClick={fadeAllAudio} colorScheme="red">
-              Fade Audio
-            </Button>
-          )}
-        </HStack>
-      </Flex>
-
       {!hasFiles ? (
         <VStack
           justify="center"
@@ -960,13 +953,12 @@ const FileManager: React.FC<FileManagerProps> = ({
               flexDirection="column"
             >
               <TabList mb={4} flexWrap="wrap">
-                {loopingMusic.length > 0 && <Tab>Background Music</Tab>}
-                {loopingSoundEffects.length > 0 && <Tab>Looping SFX</Tab>}
-                {soundEffects.length > 0 && <Tab>Sound Effects</Tab>}
-                {locationImages.length > 0 && <Tab>Locations</Tab>}
-                {portraitImages.length > 0 && <Tab>Characters</Tab>}
-                {backgroundVideos.length > 0 && <Tab>Video Backgrounds</Tab>}
-                {eventVideos.length > 0 && <Tab>Event Videos</Tab>}
+                {loopingMusic.length > 0 && <Tab><HStack spacing={1}><MusicNoteIcon fontSize="small" /><Text>BGM</Text></HStack></Tab>}
+                {loopingSoundEffects.length > 0 && <Tab><HStack spacing={1}><LoopIcon fontSize="small" /><Text>Loops</Text></HStack></Tab>}
+                {soundEffects.length > 0 && <Tab><HStack spacing={1}><VolumeUpIcon fontSize="small" /><Text>SFX</Text></HStack></Tab>}
+                {(locationImages.length > 0 || backgroundVideos.length > 0) && <Tab><HStack spacing={1}><LandscapeIcon fontSize="small" /><Text>Backgrounds</Text></HStack></Tab>}
+                {portraitImages.length > 0 && <Tab><HStack spacing={1}><PeopleIcon fontSize="small" /><Text>Characters</Text></HStack></Tab>}
+                {eventVideos.length > 0 && <Tab><HStack spacing={1}><MovieIcon fontSize="small" /><Text>Events</Text></HStack></Tab>}
               </TabList>
 
               <TabPanels flex="1" overflow="auto">
@@ -1006,24 +998,49 @@ const FileManager: React.FC<FileManagerProps> = ({
                   </TabPanel>
                 )}
 
-                {locationImages.length > 0 && (
+                {(locationImages.length > 0 || backgroundVideos.length > 0) && (
                   <TabPanel>
                     <VStack align="stretch" spacing={4}>
-                      <Flex justifyContent="space-between" alignItems="center">
-                        <Heading size="sm" color="gray.300">
-                          Locations
-                        </Heading>
-                        <Button
-                          size="sm"
-                          onClick={() => setSelectedLocation(null)}
-                          colorScheme="red"
-                          isDisabled={selectedLocation === null}
-                        >
-                          Clear Selection
-                        </Button>
-                      </Flex>
-                      <Divider />
-                      <Box>{displayImages(locationImages, true)}</Box>
+                      {locationImages.length > 0 && (
+                        <>
+                          <Flex justifyContent="space-between" alignItems="center">
+                            <Heading size="sm" color="gray.300">
+                              Image Backgrounds
+                            </Heading>
+                            <Button
+                              size="sm"
+                              onClick={() => setSelectedLocation(null)}
+                              colorScheme="red"
+                              isDisabled={selectedLocation === null}
+                            >
+                              Clear Selection
+                            </Button>
+                          </Flex>
+                          <Divider />
+                          <Box mb={6}>{displayImages(locationImages, true)}</Box>
+                        </>
+                      )}
+                      
+                      {backgroundVideos.length > 0 && (
+                        <>
+                          <Flex justifyContent="space-between" alignItems="center">
+                            <Heading size="sm" color="gray.300">
+                              Video Backgrounds
+                            </Heading>
+                            {currentlyPlayingVideo.background && (
+                              <Button
+                                size="sm"
+                                onClick={clearVideo}
+                                colorScheme="red"
+                              >
+                                Stop Video
+                              </Button>
+                            )}
+                          </Flex>
+                          <Divider />
+                          <Box>{displayVideos(backgroundVideos)}</Box>
+                        </>
+                      )}
                     </VStack>
                   </TabPanel>
                 )}
@@ -1050,30 +1067,6 @@ const FileManager: React.FC<FileManagerProps> = ({
                   </TabPanel>
                 )}
 
-                {backgroundVideos.length > 0 && (
-                  <TabPanel>
-                    <VStack align="stretch" spacing={4}>
-                      <Flex justifyContent="space-between" alignItems="center">
-                        <Heading size="sm" color="gray.300">
-                          Video Backgrounds
-                        </Heading>
-                        {currentlyPlayingVideo &&
-                          currentlyPlayingVideo.isBackground && (
-                            <Button
-                              size="sm"
-                              onClick={clearVideo}
-                              colorScheme="red"
-                            >
-                              Stop Video
-                            </Button>
-                          )}
-                      </Flex>
-                      <Divider />
-                      <Box>{displayVideos(backgroundVideos)}</Box>
-                    </VStack>
-                  </TabPanel>
-                )}
-
                 {eventVideos.length > 0 && (
                   <TabPanel>
                     <VStack align="stretch" spacing={4}>
@@ -1081,16 +1074,15 @@ const FileManager: React.FC<FileManagerProps> = ({
                         <Heading size="sm" color="gray.300">
                           Event Videos
                         </Heading>
-                        {currentlyPlayingVideo &&
-                          !currentlyPlayingVideo.isBackground && (
-                            <Button
-                              size="sm"
-                              onClick={clearVideo}
-                              colorScheme="red"
-                            >
-                              Stop Video
-                            </Button>
-                          )}
+                        {currentlyPlayingVideo.event && (
+                          <Button
+                            size="sm"
+                            onClick={clearVideo}
+                            colorScheme="red"
+                          >
+                            Stop Video
+                          </Button>
+                        )}
                       </Flex>
                       <Divider />
                       <Box>{displayVideos(eventVideos)}</Box>
@@ -1111,24 +1103,61 @@ const FileManager: React.FC<FileManagerProps> = ({
               borderColor="gray.700"
               overflowY="auto"
             >
-              <VStack align="stretch" spacing={4}>
-                <Heading size="xs" color="gray.400">
-                  ACTIVE CONTENT
+              {/* Global Controls (moved from top to sidebar) */}
+              <VStack spacing={2} mb={4} align="stretch">
+                <Heading size="xs" color="gray.400" mb={1}>
+                  DISPLAY CONTROLS
                 </Heading>
-
-                {/* Active Event Videos */}
-                {currentlyPlayingVideo &&
-                  !currentlyPlayingVideo.isBackground && (
-                    <SidebarItem
-                      title="Event Video"
-                      onClose={clearVideo}
-                      icon={<VideocamIcon fontSize="small" />}
+                <SimpleGrid columns={2} spacing={2}>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowNames(!showNames)}
+                    colorScheme={showNames ? "red" : "green"}
+                  >
+                    {showNames ? "Hide Names" : "Show Names"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setBlackOverlay(!blackOverlay)}
+                    colorScheme={blackOverlay ? "green" : "red"}
+                  >
+                    {blackOverlay ? "Reveal Display" : "Hide Display"}
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    onClick={clearAllSelections} 
+                    colorScheme="red"
+                  >
+                    Clear All
+                  </Button>
+                  {Object.keys(activeAudio).length > 0 ? (
+                    <Button 
+                      size="sm" 
+                      onClick={fadeAllAudio} 
+                      colorScheme="red"
                     >
-                      <Text fontSize="xs" color="gray.400">
-                        {parseFilename(currentlyPlayingVideo.file.name)}
-                      </Text>
-                    </SidebarItem>
+                      Fade Audio
+                    </Button>
+                  ) : (
+                    <Box></Box> /* Empty placeholder when no audio is active */
                   )}
+                </SimpleGrid>
+                <Divider mt={2} />
+              </VStack>
+
+              <VStack align="stretch" spacing={4}>
+                {/* Active Event Videos */}
+                {currentlyPlayingVideo.event && (
+                  <SidebarItem
+                    title="Event Video"
+                    onClose={() => clearVideo()}
+                    icon={<VideocamIcon fontSize="small" />}
+                  >
+                    <Text fontSize="xs" color="gray.400">
+                      {parseFilename(currentlyPlayingVideo.event.file.name)}
+                    </Text>
+                  </SidebarItem>
+                )}
 
                 {/* Characters/Portraits */}
                 {activePortraitImages.length > 0 && (
@@ -1163,9 +1192,7 @@ const FileManager: React.FC<FileManagerProps> = ({
                 )}
 
                 {/* Background Image or Video */}
-                {(activeLocationImage ||
-                  (currentlyPlayingVideo &&
-                    currentlyPlayingVideo.isBackground)) && (
+                {(activeLocationImage || currentlyPlayingVideo.background) && (
                   <Box>
                     <Heading size="xs" color="gray.400" mb={2}>
                       BACKGROUND
@@ -1186,22 +1213,23 @@ const FileManager: React.FC<FileManagerProps> = ({
                       </SidebarItem>
                     )}
 
-                    {currentlyPlayingVideo &&
-                      currentlyPlayingVideo.isBackground && (
-                        <SidebarItem
-                          title={parseFilename(currentlyPlayingVideo.file.name)}
-                          onClose={clearVideo}
-                          icon={<VideocamIcon fontSize="small" />}
-                        >
-                          <Image
-                            src={currentlyPlayingVideo.thumbnail}
-                            alt={currentlyPlayingVideo.file.name}
-                            boxSize="50px"
-                            objectFit="cover"
-                            borderRadius="md"
-                          />
-                        </SidebarItem>
-                      )}
+                    {currentlyPlayingVideo.background && (
+                      <SidebarItem
+                        title={parseFilename(
+                          currentlyPlayingVideo.background.file.name
+                        )}
+                        onClose={() => playVideo("")}
+                        icon={<VideocamIcon fontSize="small" />}
+                      >
+                        <Image
+                          src={currentlyPlayingVideo.background.thumbnail}
+                          alt={currentlyPlayingVideo.background.file.name}
+                          boxSize="50px"
+                          objectFit="cover"
+                          borderRadius="md"
+                        />
+                      </SidebarItem>
+                    )}
                   </Box>
                 )}
 

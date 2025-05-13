@@ -26,9 +26,14 @@ export default function Home() {
   const [droppedImages, setDroppedImages] = useState([]);
   const [droppedVideos, setDroppedVideos] = useState([]);
   const [droppedAudioFiles, setDroppedAudioFiles] = useState([]);
-  const [showNames, setShowNames] = useState(false);
+  const [showNames, setShowNames] = useState(true);
   const [blackOverlay, setBlackOverlay] = useState(false);
-  const [currentlyPlayingVideo, setCurrentlyPlayingVideo] = useState(null);
+
+  // Replace the single video state with a video state object that tracks background and event videos separately
+  const [activeVideos, setActiveVideos] = useState({
+    background: null,
+    event: null,
+  });
 
   const location = useLocation();
 
@@ -68,8 +73,7 @@ export default function Home() {
       setSelectedLocation(null);
     } else {
       setSelectedLocation(index);
-      if (currentlyPlayingVideo !== null && currentlyPlayingVideo?.isBackground)
-        clearVideo();
+      if (activeVideos.background !== null) clearVideo();
     }
   };
 
@@ -112,6 +116,22 @@ export default function Home() {
     blackOverlay,
   ]);
 
+  // Listen for messages from the popup window
+  useEffect(() => {
+    const handleMessage = (event) => {
+      // Handle the event video ended message from popup
+      if (event.data.type === "EVENT_VIDEO_ENDED") {
+        // Only clear if the current video is an event video (not a background)
+        if (activeVideos.event) {
+          setActiveVideos((prev) => ({ ...prev, event: null }));
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [activeVideos]);
+
   const playVideo = (filename) => {
     const video = droppedVideos.find((video) => video.file.name === filename);
     // Sent the video to the popup
@@ -123,7 +143,10 @@ export default function Home() {
       },
     };
     popupWindow.postMessage(message, "*");
-    setCurrentlyPlayingVideo(video);
+    setActiveVideos((prev) => ({
+      ...prev,
+      [video.isBackground ? "background" : "event"]: video,
+    }));
     if (video.isBackground) {
       setSelectedLocation(null);
     }
@@ -134,7 +157,7 @@ export default function Home() {
       type: "VIDEO_CLEAR",
     };
     popupWindow.postMessage(message, "*");
-    setCurrentlyPlayingVideo(null);
+    setActiveVideos({ background: null, event: null });
   };
 
   return (
@@ -161,7 +184,7 @@ export default function Home() {
           index={tabIndex >= 0 ? tabIndex : 0}
         >
           <TabPanels w="100%" height="100%">
-            <TabPanel w="100%" height="100%" p={2}>
+            <TabPanel w="100%" height="100%">
               <Box
                 flex={1}
                 display="flex"
@@ -169,8 +192,6 @@ export default function Home() {
                 maxHeight="100%"
                 height="100%"
                 overflow="auto"
-                borderWidth={1}
-                borderRadius="md"
                 w="100%"
               >
                 <FileManager
@@ -188,7 +209,7 @@ export default function Home() {
                   setDroppedVideos={setDroppedVideos}
                   playVideo={playVideo}
                   clearVideo={clearVideo}
-                  currentlyPlayingVideo={currentlyPlayingVideo}
+                  currentlyPlayingVideo={activeVideos}
                   blackOverlay={blackOverlay}
                   setBlackOverlay={setBlackOverlay}
                 />

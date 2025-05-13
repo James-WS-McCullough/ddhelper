@@ -65,10 +65,24 @@ const Popup = () => {
   useEffect(() => {
     if (eventVideoRef.current) {
       eventVideoRef.current.onended = () => {
+        // When event video finishes, clear the src
         eventVideoRef.current.src = "";
         setIsVideoPlaying(false);
+
+        // Fade the overlay back to normal
         setOverlayOpacity(1);
-        setUseBlackOverlay(false);
+
+        // Send a message back to the parent window to clear the currentlyPlayingVideo state
+        // This makes sure the video is removed from the sidebar
+        window.opener.postMessage({ type: "EVENT_VIDEO_ENDED" }, "*");
+
+        // Gradually fade back the underlying content
+        const revealContent = () => {
+          setUseBlackOverlay(false);
+        };
+
+        // Add a slight delay before revealing content to create a smooth transition
+        setTimeout(revealContent, 500);
       };
     }
   }, [eventVideoRef]);
