@@ -276,31 +276,45 @@ const FileManager: React.FC<FileManagerProps> = ({
   // Filter files by type
   const locationImages = droppedImages
     .filter((img) => img.file.name.includes("location"))
-    .sort((a, b) => parseFilename(a.file.name).localeCompare(parseFilename(b.file.name)));
-  
+    .sort((a, b) =>
+      parseFilename(a.file.name).localeCompare(parseFilename(b.file.name))
+    );
+
   const portraitImages = droppedImages
     .filter((img) => !img.file.name.includes("location"))
-    .sort((a, b) => parseFilename(a.file.name).localeCompare(parseFilename(b.file.name)));
-  
+    .sort((a, b) =>
+      parseFilename(a.file.name).localeCompare(parseFilename(b.file.name))
+    );
+
   const backgroundVideos = droppedVideos
     .filter((video) => video.isBackground)
-    .sort((a, b) => parseFilename(a.file.name).localeCompare(parseFilename(b.file.name)));
-  
+    .sort((a, b) =>
+      parseFilename(a.file.name).localeCompare(parseFilename(b.file.name))
+    );
+
   const eventVideos = droppedVideos
     .filter((video) => !video.isBackground)
-    .sort((a, b) => parseFilename(a.file.name).localeCompare(parseFilename(b.file.name)));
-  
+    .sort((a, b) =>
+      parseFilename(a.file.name).localeCompare(parseFilename(b.file.name))
+    );
+
   const loopingSoundEffects = droppedAudioFiles
     .filter((audio) => audio.loop && !audio.music)
-    .sort((a, b) => parseFilename(a.file.name).localeCompare(parseFilename(b.file.name)));
-  
+    .sort((a, b) =>
+      parseFilename(a.file.name).localeCompare(parseFilename(b.file.name))
+    );
+
   const loopingMusic = droppedAudioFiles
     .filter((audio) => audio.music)
-    .sort((a, b) => parseFilename(a.file.name).localeCompare(parseFilename(b.file.name)));
-  
+    .sort((a, b) =>
+      parseFilename(a.file.name).localeCompare(parseFilename(b.file.name))
+    );
+
   const soundEffects = droppedAudioFiles
     .filter((audio) => !audio.loop && !audio.music)
-    .sort((a, b) => parseFilename(a.file.name).localeCompare(parseFilename(b.file.name)));
+    .sort((a, b) =>
+      parseFilename(a.file.name).localeCompare(parseFilename(b.file.name))
+    );
 
   // Handle drag and drop
   const handleDragOver = (e: React.DragEvent) => {
@@ -917,7 +931,6 @@ const FileManager: React.FC<FileManagerProps> = ({
       h="100%"
       display="flex"
       flexDirection="column"
-      bg="gray.900"
       overflow="hidden"
     >
       {!hasFiles ? (
@@ -953,12 +966,54 @@ const FileManager: React.FC<FileManagerProps> = ({
               flexDirection="column"
             >
               <TabList mb={4} flexWrap="wrap">
-                {loopingMusic.length > 0 && <Tab><HStack spacing={1}><MusicNoteIcon fontSize="small" /><Text>BGM</Text></HStack></Tab>}
-                {loopingSoundEffects.length > 0 && <Tab><HStack spacing={1}><LoopIcon fontSize="small" /><Text>Loops</Text></HStack></Tab>}
-                {soundEffects.length > 0 && <Tab><HStack spacing={1}><VolumeUpIcon fontSize="small" /><Text>SFX</Text></HStack></Tab>}
-                {(locationImages.length > 0 || backgroundVideos.length > 0) && <Tab><HStack spacing={1}><LandscapeIcon fontSize="small" /><Text>Backgrounds</Text></HStack></Tab>}
-                {portraitImages.length > 0 && <Tab><HStack spacing={1}><PeopleIcon fontSize="small" /><Text>Characters</Text></HStack></Tab>}
-                {eventVideos.length > 0 && <Tab><HStack spacing={1}><MovieIcon fontSize="small" /><Text>Events</Text></HStack></Tab>}
+                {loopingMusic.length > 0 && (
+                  <Tab>
+                    <HStack spacing={1}>
+                      <MusicNoteIcon fontSize="small" />
+                      <Text>BGM</Text>
+                    </HStack>
+                  </Tab>
+                )}
+                {loopingSoundEffects.length > 0 && (
+                  <Tab>
+                    <HStack spacing={1}>
+                      <LoopIcon fontSize="small" />
+                      <Text>Loops</Text>
+                    </HStack>
+                  </Tab>
+                )}
+                {soundEffects.length > 0 && (
+                  <Tab>
+                    <HStack spacing={1}>
+                      <VolumeUpIcon fontSize="small" />
+                      <Text>SFX</Text>
+                    </HStack>
+                  </Tab>
+                )}
+                {(locationImages.length > 0 || backgroundVideos.length > 0) && (
+                  <Tab>
+                    <HStack spacing={1}>
+                      <LandscapeIcon fontSize="small" />
+                      <Text>Backgrounds</Text>
+                    </HStack>
+                  </Tab>
+                )}
+                {portraitImages.length > 0 && (
+                  <Tab>
+                    <HStack spacing={1}>
+                      <PeopleIcon fontSize="small" />
+                      <Text>Characters</Text>
+                    </HStack>
+                  </Tab>
+                )}
+                {eventVideos.length > 0 && (
+                  <Tab>
+                    <HStack spacing={1}>
+                      <MovieIcon fontSize="small" />
+                      <Text>Events</Text>
+                    </HStack>
+                  </Tab>
+                )}
               </TabList>
 
               <TabPanels flex="1" overflow="auto">
@@ -1003,7 +1058,10 @@ const FileManager: React.FC<FileManagerProps> = ({
                     <VStack align="stretch" spacing={4}>
                       {locationImages.length > 0 && (
                         <>
-                          <Flex justifyContent="space-between" alignItems="center">
+                          <Flex
+                            justifyContent="space-between"
+                            alignItems="center"
+                          >
                             <Heading size="sm" color="gray.300">
                               Image Backgrounds
                             </Heading>
@@ -1017,13 +1075,18 @@ const FileManager: React.FC<FileManagerProps> = ({
                             </Button>
                           </Flex>
                           <Divider />
-                          <Box mb={6}>{displayImages(locationImages, true)}</Box>
+                          <Box mb={6}>
+                            {displayImages(locationImages, true)}
+                          </Box>
                         </>
                       )}
-                      
+
                       {backgroundVideos.length > 0 && (
                         <>
-                          <Flex justifyContent="space-between" alignItems="center">
+                          <Flex
+                            justifyContent="space-between"
+                            alignItems="center"
+                          >
                             <Heading size="sm" color="gray.300">
                               Video Backgrounds
                             </Heading>
@@ -1123,19 +1186,15 @@ const FileManager: React.FC<FileManagerProps> = ({
                   >
                     {blackOverlay ? "Reveal Display" : "Hide Display"}
                   </Button>
-                  <Button 
-                    size="sm" 
-                    onClick={clearAllSelections} 
+                  <Button
+                    size="sm"
+                    onClick={clearAllSelections}
                     colorScheme="red"
                   >
                     Clear All
                   </Button>
                   {Object.keys(activeAudio).length > 0 ? (
-                    <Button 
-                      size="sm" 
-                      onClick={fadeAllAudio} 
-                      colorScheme="red"
-                    >
+                    <Button size="sm" onClick={fadeAllAudio} colorScheme="red">
                       Fade Audio
                     </Button>
                   ) : (
