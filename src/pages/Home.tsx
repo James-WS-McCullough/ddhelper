@@ -2,9 +2,6 @@ import {
   Box,
   Button,
   HStack,
-  Heading,
-  Tab,
-  TabList,
   TabPanel,
   TabPanels,
   Tabs,
@@ -15,15 +12,12 @@ import AudioFileDropper from "./AudioFileDropper";
 import ImageDropper from "./ImageDropper";
 import ScoreInput from "./ScoreInput";
 import { useEffect, useState } from "react";
-import AttackForm from "../components/AttackInput";
 import InitiativeTracker from "../components/InitiativeTracker";
-import SectionTab from "../components/SectionTab";
-import { StatBlockInput } from "../components/StatBlockInput";
-import { PlayerForm } from "../components/PlayerForm";
-import { PlayerManager } from "../components/PlayerManager";
 import ScrollableTabPanel from "../components/ScrollableTabPannel";
+import { PlayerManager } from "../components/PlayerManager";
 import { EncounterManager } from "../components/EncounterManager";
-import { D20Icon } from "../assets/D20icon";
+import { HeaderBar } from "../components/HeaderBar";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Home2() {
   const [scores, setScores] = useState([]); // An array to hold the scores
@@ -35,6 +29,26 @@ export default function Home2() {
   const [showNames, setShowNames] = useState(false);
   const [blackOverlay, setBlackOverlay] = useState(false);
   const [currentlyPlayingVideo, setCurrentlyPlayingVideo] = useState(null);
+
+  const location = useLocation();
+
+  // Get category from URL parameters or default to "all"
+  const searchParams = new URLSearchParams(location.search);
+  const currentCategory = searchParams.get("category") || "all";
+
+  const options = [
+    { value: "all", label: "Home" },
+    { value: "initiative", label: "Initiative Tracker" },
+    { value: "deaththrowdisplay", label: "Death Throw Display" },
+    { value: "playerconfig", label: "Player Config" },
+    { value: "monsterconfig", label: "Monster Config" },
+    { value: "setup", label: "Setup" },
+  ];
+
+  // Find the index of the current category in options
+  const tabIndex = options.findIndex(
+    (option) => option.value === currentCategory
+  );
 
   const handlePopup = () => {
     if (!popupWindow || popupWindow.closed) {
@@ -125,101 +139,96 @@ export default function Home2() {
 
   return (
     <VStack
-      display="flex"
-      flexDirection="column"
-      justifyContent="space-between" // space between main content and the footer
-      alignItems="center"
-      h="100vh" // full height of the viewport
-      maxHeight="100vh"
-      spacing={3}
       bg="gray.800"
       color="white"
-      p={5}
+      display="flex"
+      height={"100vh"}
+      spacing={0}
     >
-      <HStack>
-        <D20Icon size={50} />
-        <Heading>D&D HELPER</Heading>
-      </HStack>
-      <Tabs isFitted variant="enclosed" w="100%" height="calc(100% - 100px)">
-        <TabList>
-          <SectionTab>Sound + Images</SectionTab>
-          <SectionTab>Initiative Tracker</SectionTab>
-          <SectionTab>Player Config</SectionTab>
-          <SectionTab>Monster Designer</SectionTab>
-          <SectionTab>Death Throw Display</SectionTab>
-          <SectionTab>Setup</SectionTab>
-        </TabList>
-        <TabPanels w="100%" height="calc(100% - 60px)">
-          <TabPanel w="100%" height="100%">
-            <HStack spacing={5} w="100%" height="100%">
-              <Box
-                flex={1}
-                p={3}
-                display="flex"
-                flexDirection="column" // Ensures the flex items are stacked vertically
-                maxHeight="100%"
-                height="100%"
-                overflow="auto"
-                borderWidth={1}
-                borderRadius="md"
-                w="100%"
-              >
-                <AudioFileDropper />
-              </Box>
-
-              <Box
-                flex={1}
-                p={3}
-                borderWidth={1}
-                borderRadius="md"
-                display="flex"
-                flexDirection="column" // Ensures the flex items are stacked vertically
-                maxHeight="100%"
-                height="100%"
-                overflow="auto"
-              >
-                <ImageDropper
-                  selectedLocation={selectedLocation}
-                  setSelectedLocation={selectNewSelectedLocation}
-                  selectedPortraits={selectedPortraits}
-                  setSelectedPortraits={setSelectedPortraits}
-                  droppedImages={droppedImages}
-                  setDroppedImages={setDroppedImages}
-                  setShowNames={setShowNames}
-                  showNames={showNames}
-                  droppedVideos={droppedVideos}
-                  setDroppedVideos={setDroppedVideos}
-                  playVideo={playVideo}
-                  clearVideo={clearVideo}
-                  currentlyPlayingVideo={currentlyPlayingVideo}
-                  blackOverlay={blackOverlay}
-                  setBlackOverlay={setBlackOverlay}
-                />
-              </Box>
-            </HStack>
-          </TabPanel>
-          <ScrollableTabPanel>
-            <InitiativeTracker />
-          </ScrollableTabPanel>
-          <ScrollableTabPanel>
-            <PlayerManager />
-          </ScrollableTabPanel>
-          <ScrollableTabPanel>
-            <EncounterManager />
-          </ScrollableTabPanel>
-          <ScrollableTabPanel>
-            <ScoreInput scores={scores} setScores={setScores} />
-          </ScrollableTabPanel>
-          <TabPanel>
-            <Text fontSize="xl" marginBottom="3">
-              Open Display Popup
-            </Text>
-            <Button colorScheme="blue" onClick={handlePopup}>
-              Open Popup
-            </Button>
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
+      <HeaderBar />
+      <VStack
+        flexDirection="column"
+        justifyContent="space-between"
+        alignItems="center"
+        height="calc(100vh - 60px)"
+        w="100%"
+      >
+        <Tabs
+          variant="enclosed"
+          w="100%"
+          flex={1}
+          height="100%"
+          index={tabIndex >= 0 ? tabIndex : 0}
+        >
+          <TabPanels w="100%" height="100%">
+            <TabPanel w="100%" height="100%">
+              <HStack spacing={5} w="100%" height="100%">
+                <Box
+                  flex={1}
+                  display="flex"
+                  flexDirection="column" // Ensures the flex items are stacked vertically
+                  maxHeight="100%"
+                  height="100%"
+                  overflow="auto"
+                  borderWidth={1}
+                  borderRadius="md"
+                  w="100%"
+                >
+                  <AudioFileDropper />
+                </Box>
+                <Box
+                  flex={1}
+                  borderWidth={1}
+                  borderRadius="md"
+                  display="flex"
+                  flexDirection="column" // Ensures the flex items are stacked vertically
+                  maxHeight="100%"
+                  height="100%"
+                  overflow="auto"
+                >
+                  <ImageDropper
+                    selectedLocation={selectedLocation}
+                    setSelectedLocation={selectNewSelectedLocation}
+                    selectedPortraits={selectedPortraits}
+                    setSelectedPortraits={setSelectedPortraits}
+                    droppedImages={droppedImages}
+                    setDroppedImages={setDroppedImages}
+                    setShowNames={setShowNames}
+                    showNames={showNames}
+                    droppedVideos={droppedVideos}
+                    setDroppedVideos={setDroppedVideos}
+                    playVideo={playVideo}
+                    clearVideo={clearVideo}
+                    currentlyPlayingVideo={currentlyPlayingVideo}
+                    blackOverlay={blackOverlay}
+                    setBlackOverlay={setBlackOverlay}
+                  />
+                </Box>
+              </HStack>
+            </TabPanel>
+            <ScrollableTabPanel>
+              <InitiativeTracker />
+            </ScrollableTabPanel>
+            <ScrollableTabPanel>
+              <ScoreInput scores={scores} setScores={setScores} />
+            </ScrollableTabPanel>
+            <ScrollableTabPanel>
+              <PlayerManager />
+            </ScrollableTabPanel>
+            <ScrollableTabPanel>
+              <EncounterManager />
+            </ScrollableTabPanel>
+            <TabPanel>
+              <Text fontSize="xl" marginBottom="3">
+                Open Display Popup
+              </Text>
+              <Button colorScheme="blue" onClick={handlePopup}>
+                Open Popup
+              </Button>
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
+      </VStack>
     </VStack>
   );
 }

@@ -353,224 +353,218 @@ const InitiativeTracker: React.FC = () => {
   });
 
   return (
-    <Box>
-      <VStack margin={2}>
-        <VStack width="100%">
-          {participants.map((participant) => (
-            <HStack
-              key={participant.id}
-              backgroundColor={
-                !participant?.isEnabled
-                  ? "gray.700"
-                  : !participant.creature
-                  ? currentParticipant === participant
-                    ? "green.500"
-                    : "green.800"
-                  : currentParticipant === participant
-                  ? "blue.500"
-                  : "blue.800"
-              }
-              padding={3}
-              borderRadius="md"
-              borderWidth="1px"
-              borderColor={participant.isEnabled ? "white" : "gray.500"}
-              justifyContent={"space-between"}
-              width="100%"
-              textColor={participant.isEnabled ? "white" : "gray.400"}
-            >
-              <HStack>
-                <Input
-                  textAlign="center"
-                  defaultValue={participant.initiative}
-                  onChange={(valueString) => {
-                    if (
-                      valueString.target.value !== "" &&
-                      !isNaN(parseInt(valueString.target.value, 10))
-                    ) {
-                      updateInitiative(
-                        participant.id,
-                        valueString.target.value
-                      );
-                    }
-                  }}
-                  w="40px" // Update width to 20
-                  h="40px"
-                  padding={0}
-                />
-                {!participant.creature && (
-                  <Text textAlign="start">{participant.name}</Text>
-                )}
-                {participant.creature && (
-                  <HStack>
+    <VStack>
+      <VStack width="100%">
+        {participants.map((participant) => (
+          <HStack
+            key={participant.id}
+            backgroundColor={
+              !participant?.isEnabled
+                ? "gray.700"
+                : !participant.creature
+                ? currentParticipant === participant
+                  ? "green.500"
+                  : "green.800"
+                : currentParticipant === participant
+                ? "blue.500"
+                : "blue.800"
+            }
+            padding={3}
+            borderRadius="md"
+            borderWidth="1px"
+            borderColor={participant.isEnabled ? "white" : "gray.500"}
+            justifyContent={"space-between"}
+            width="100%"
+            textColor={participant.isEnabled ? "white" : "gray.400"}
+          >
+            <HStack>
+              <Input
+                textAlign="center"
+                defaultValue={participant.initiative}
+                onChange={(valueString) => {
+                  if (
+                    valueString.target.value !== "" &&
+                    !isNaN(parseInt(valueString.target.value, 10))
+                  ) {
+                    updateInitiative(participant.id, valueString.target.value);
+                  }
+                }}
+                w="40px" // Update width to 20
+                h="40px"
+                padding={0}
+              />
+              {!participant.creature && (
+                <Text textAlign="start">{participant.name}</Text>
+              )}
+              {participant.creature && (
+                <HStack>
+                  <Text
+                    width={40} // Update width to 40px
+                    textAlign="start"
+                  >
+                    {participant.name}
+                  </Text>
+                  <VStack>
                     <Text
-                      width={40} // Update width to 40px
+                      width={20} // Update width to 40px
                       textAlign="start"
                     >
-                      {participant.name}
+                      AC: {participant.creature.armorClass}
                     </Text>
-                    <VStack>
-                      <Text
-                        width={20} // Update width to 40px
-                        textAlign="start"
-                      >
-                        AC: {participant.creature.armorClass}
-                      </Text>
-                      <Text
-                        width={20} // Update width to 40px
-                        textAlign="start"
-                      >
-                        MV: {participant.creature.speed}ft
-                      </Text>
-                      <Text
-                        width={20} // Update width to 40px
-                        textAlign="start"
-                      >
-                        PPer: {calculatePassivePerception(participant.creature)}
-                      </Text>
-                    </VStack>
-                    {participant.combatants && (
-                      <VStack alignItems="start">
-                        {participant.combatants.map((combatant) => (
+                    <Text
+                      width={20} // Update width to 40px
+                      textAlign="start"
+                    >
+                      MV: {participant.creature.speed}ft
+                    </Text>
+                    <Text
+                      width={20} // Update width to 40px
+                      textAlign="start"
+                    >
+                      PPer: {calculatePassivePerception(participant.creature)}
+                    </Text>
+                  </VStack>
+                  {participant.combatants && (
+                    <VStack alignItems="start">
+                      {participant.combatants.map((combatant) => (
+                        <HStack>
+                          <IconButton
+                            icon={<EditIcon />}
+                            size="sm"
+                            colorScheme="pink"
+                            aria-label="Damage"
+                            onClick={() => {
+                              setSelectedParticipantId(participant.id);
+                              setSelectedCombatantId(combatant.id);
+                              setDamageInput("");
+                              onDamageModalOpen();
+                            }}
+                          />
+                          {participant.combatants.length > 1 && (
+                            <Text key={combatant.id}>{combatant.letter}:</Text>
+                          )}
+                          {combatant.hitPoints > 0 ? (
+                            <Text
+                              key={combatant.id}
+                              color={
+                                (participant.creature as monsterGroup)
+                                  .maxHitPoints /
+                                  2 >
+                                combatant.hitPoints
+                                  ? "orange"
+                                  : "white"
+                              }
+                            >
+                              {combatant.hitPoints}/
+                              {
+                                (participant.creature as monsterGroup)
+                                  .maxHitPoints
+                              }{" "}
+                              hp
+                            </Text>
+                          ) : (
+                            <Text key={combatant.id} color="red">
+                              Dead
+                            </Text>
+                          )}
                           <HStack>
-                            <IconButton
-                              icon={<EditIcon />}
-                              size="sm"
-                              colorScheme="pink"
-                              aria-label="Damage"
-                              onClick={() => {
-                                setSelectedParticipantId(participant.id);
-                                setSelectedCombatantId(combatant.id);
-                                setDamageInput("");
-                                onDamageModalOpen();
-                              }}
-                            />
-                            {participant.combatants.length > 1 && (
-                              <Text key={combatant.id}>
-                                {combatant.letter}:
-                              </Text>
-                            )}
-                            {combatant.hitPoints > 0 ? (
+                            {combatant.conditions.map((condition) => (
                               <Text
-                                key={combatant.id}
-                                color={
-                                  (participant.creature as monsterGroup)
-                                    .maxHitPoints /
-                                    2 >
-                                  combatant.hitPoints
-                                    ? "orange"
-                                    : "white"
-                                }
+                                key={condition}
+                                backgroundColor="gray.900"
+                                color="white"
+                                fontWeight="bold"
+                                borderRadius="xl"
+                                padding={1}
+                                paddingInline={2}
                               >
-                                {combatant.hitPoints}/
-                                {
-                                  (participant.creature as monsterGroup)
-                                    .maxHitPoints
-                                }{" "}
-                                hp
+                                {conditions[condition]}
                               </Text>
-                            ) : (
-                              <Text key={combatant.id} color="red">
-                                Dead
-                              </Text>
-                            )}
-                            <HStack>
-                              {combatant.conditions.map((condition) => (
-                                <Text
-                                  key={condition}
-                                  backgroundColor="gray.900"
-                                  color="white"
-                                  fontWeight="bold"
-                                  borderRadius="xl"
-                                  padding={1}
-                                  paddingInline={2}
-                                >
-                                  {conditions[condition]}
-                                </Text>
-                              ))}
-                            </HStack>
+                            ))}
                           </HStack>
-                        ))}
-                      </VStack>
-                    )}
-                  </HStack>
-                )}
-              </HStack>
-
-              <HStack>
-                {participant.creature && (
-                  <IconButton
-                    icon={<LibraryBooksIcon />}
-                    colorScheme="teal"
-                    aria-label="View Monster"
-                    onClick={() => setSelectedCreature(participant.creature)}
-                  />
-                )}
-                <IconButton
-                  icon={
-                    participant.isEnabled ? <ToggleOnIcon /> : <ToggleOffIcon />
-                  }
-                  colorScheme="orange"
-                  aria-label="Toggle participant"
-                  onClick={() => handleToggleParticipant(participant)}
-                />
-                <IconButton
-                  icon={<DeleteIcon />}
-                  colorScheme="red"
-                  aria-label="Remove participant"
-                  onClick={() => handleRemoveParticipant(participant.id)}
-                />
-              </HStack>
+                        </HStack>
+                      ))}
+                    </VStack>
+                  )}
+                </HStack>
+              )}
             </HStack>
-          ))}
-        </VStack>
-        <HStack>
-          <Text marginRight={3}>
-            Current: {currentParticipant ? currentParticipant.name : "None"}
-          </Text>
-          <Button colorScheme="green" onClick={handleNextInitiative}>
-            Next
-          </Button>
-          <Button colorScheme="green" onClick={handlePreviousInitiative}>
-            Previous
-          </Button>
-          <Button colorScheme="blue" onClick={handleAddPlayers}>
-            Add Players
-          </Button>
-          <Button
-            colorScheme="blue"
-            onClick={() => {
-              setEncounters(loadEncountersFromStorage());
-              onOpen();
-            }}
-          >
-            Add Encounter
-          </Button>
-          <Button colorScheme="red" onClick={handleClear}>
-            Clear
-          </Button>
-        </HStack>
 
-        <HStack>
-          <Input
-            placeholder="Note"
-            value={newParticipant}
-            onChange={(e) => setNewParticipant(e.target.value)}
-            width={80} // Update width to 40px
-          />
-          <NumberInput
-            value={newInitiative}
-            onChange={(valueString) => setNewInitiative(valueString)}
-          >
-            <NumberInputField placeholder="10" />
-          </NumberInput>
-          <IconButton
-            onClick={handleAddParticipant}
-            colorScheme="blue"
-            icon={<AddIcon />}
-            aria-label="Add participant"
-          />
-        </HStack>
+            <HStack>
+              {participant.creature && (
+                <IconButton
+                  icon={<LibraryBooksIcon />}
+                  colorScheme="teal"
+                  aria-label="View Monster"
+                  onClick={() => setSelectedCreature(participant.creature)}
+                />
+              )}
+              <IconButton
+                icon={
+                  participant.isEnabled ? <ToggleOnIcon /> : <ToggleOffIcon />
+                }
+                colorScheme="orange"
+                aria-label="Toggle participant"
+                onClick={() => handleToggleParticipant(participant)}
+              />
+              <IconButton
+                icon={<DeleteIcon />}
+                colorScheme="red"
+                aria-label="Remove participant"
+                onClick={() => handleRemoveParticipant(participant.id)}
+              />
+            </HStack>
+          </HStack>
+        ))}
       </VStack>
+      <HStack>
+        <Text marginRight={3}>
+          Current: {currentParticipant ? currentParticipant.name : "None"}
+        </Text>
+        <Button colorScheme="green" onClick={handleNextInitiative}>
+          Next
+        </Button>
+        <Button colorScheme="green" onClick={handlePreviousInitiative}>
+          Previous
+        </Button>
+        <Button colorScheme="blue" onClick={handleAddPlayers}>
+          Add Players
+        </Button>
+        <Button
+          colorScheme="blue"
+          onClick={() => {
+            setEncounters(loadEncountersFromStorage());
+            onOpen();
+          }}
+        >
+          Add Encounter
+        </Button>
+        <Button colorScheme="red" onClick={handleClear}>
+          Clear
+        </Button>
+      </HStack>
+
+      <HStack>
+        <Input
+          placeholder="Note"
+          value={newParticipant}
+          onChange={(e) => setNewParticipant(e.target.value)}
+          width={80} // Update width to 40px
+        />
+        <NumberInput
+          value={newInitiative}
+          onChange={(valueString) => setNewInitiative(valueString)}
+        >
+          <NumberInputField placeholder="10" />
+        </NumberInput>
+        <IconButton
+          onClick={handleAddParticipant}
+          colorScheme="blue"
+          icon={<AddIcon />}
+          aria-label="Add participant"
+        />
+      </HStack>
+
       {/* Encounter Selection Modal */}
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
@@ -737,7 +731,7 @@ const InitiativeTracker: React.FC = () => {
           </ModalBody>
         </DarkModalContent>
       </Modal>
-    </Box>
+    </VStack>
   );
 };
 
