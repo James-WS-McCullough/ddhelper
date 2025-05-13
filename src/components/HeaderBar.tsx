@@ -25,6 +25,7 @@ export const HeaderBar = () => {
     { value: "deaththrowdisplay", label: "Death Throw Display" },
     { value: "playerconfig", label: "Player Config" },
     { value: "monsterconfig", label: "Monster Config" },
+    { value: "setup", label: "Setup" },
   ];
 
   const handleOptionSelect = (value: string) => {
