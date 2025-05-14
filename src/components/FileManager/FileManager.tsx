@@ -82,10 +82,10 @@ interface FileManagerProps {
   // Image props
   droppedImages: ImageFile[];
   setDroppedImages: React.Dispatch<React.SetStateAction<ImageFile[]>>;
-  selectedLocation: number | null;
-  setSelectedLocation: (index: number | null) => void;
-  selectedPortraits: number[];
-  setSelectedPortraits: React.Dispatch<React.SetStateAction<number[]>>;
+  selectedLocation: string | null;
+  setSelectedLocation: (filename: string | null) => void;
+  selectedPortraits: string[];
+  setSelectedPortraits: React.Dispatch<React.SetStateAction<string[]>>;
   showNames: boolean;
   setShowNames: React.Dispatch<React.SetStateAction<boolean>>;
 
@@ -414,22 +414,31 @@ const FileManager: React.FC<FileManagerProps> = ({
   // Handle image selection
   const handleImageClick = (index: number, isLocation: boolean) => {
     if (isLocation) {
-      setSelectedLocation(index);
+      // Use filename as unique identifier
+      const filename = locationImages[index].file.name;
+      setSelectedLocation(selectedLocation === filename ? null : filename);
       return;
     }
 
-    if (selectedPortraits.includes(index)) {
-      setSelectedPortraits(selectedPortraits.filter((i) => i !== index));
+    // Use filename as unique identifier for portraits
+    const filename = portraitImages[index].file.name;
+
+    if (selectedPortraits.includes(filename)) {
+      setSelectedPortraits(
+        selectedPortraits.filter((name) => name !== filename)
+      );
     } else {
-      setSelectedPortraits([...selectedPortraits, index]);
+      setSelectedPortraits([...selectedPortraits, filename]);
     }
   };
 
   const isImageSelected = (index: number, isLocation: boolean) => {
     if (isLocation) {
-      return index === selectedLocation;
+      // Compare by filename
+      return locationImages[index].file.name === selectedLocation;
     }
-    return selectedPortraits.includes(index);
+    // Compare by filename
+    return selectedPortraits.includes(portraitImages[index].file.name);
   };
 
   // Audio player controls
@@ -900,11 +909,14 @@ const FileManager: React.FC<FileManagerProps> = ({
     droppedVideos.length > 0;
 
   // Calculate sidebar content
-  const activeLocationImage =
-    selectedLocation !== null ? locationImages[selectedLocation] : null;
-  const activePortraitImages = selectedPortraits.map(
-    (index) => portraitImages[index]
-  );
+  const activeLocationImage = selectedLocation
+    ? locationImages.find((img) => img.file.name === selectedLocation) || null
+    : null;
+
+  const activePortraitImages = selectedPortraits
+    .map((filename) => portraitImages.find((img) => img.file.name === filename))
+    .filter(Boolean) as ImageFile[];
+
   const hasActiveSoundEffects = Object.values(activeAudio).some(
     (data) => !data.audio.loop && !data.audio.music
   );
@@ -1224,29 +1236,28 @@ const FileManager: React.FC<FileManagerProps> = ({
                     <Heading size="xs" color="gray.400" mb={2}>
                       CHARACTERS
                     </Heading>
-                    {activePortraitImages.map((image, index) => {
-                      const originalIndex = selectedPortraits[index];
-                      return (
-                        <SidebarItem
-                          key={index}
-                          title={parseFilename(image.file.name)}
-                          onClose={() =>
-                            setSelectedPortraits((prev) =>
-                              prev.filter((idx) => idx !== originalIndex)
+                    {activePortraitImages.map((image, index) => (
+                      <SidebarItem
+                        key={index}
+                        title={parseFilename(image.file.name)}
+                        onClose={() =>
+                          setSelectedPortraits((prev) =>
+                            prev.filter(
+                              (filename) => filename !== image.file.name
                             )
-                          }
-                          icon={<PhotoIcon fontSize="small" />}
-                        >
-                          <Image
-                            src={image.src}
-                            alt={image.file.name}
-                            boxSize="50px"
-                            objectFit="cover"
-                            borderRadius="md"
-                          />
-                        </SidebarItem>
-                      );
-                    })}
+                          )
+                        }
+                        icon={<PhotoIcon fontSize="small" />}
+                      >
+                        <Image
+                          src={image.src}
+                          alt={image.file.name}
+                          boxSize="50px"
+                          objectFit="cover"
+                          borderRadius="md"
+                        />
+                      </SidebarItem>
+                    ))}
                   </Box>
                 )}
 

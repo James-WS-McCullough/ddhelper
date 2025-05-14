@@ -21,8 +21,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 export default function Home() {
   const [scores, setScores] = useState([]);
   const [popupWindow, setPopupWindow] = useState(null);
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [selectedPortraits, setSelectedPortraits] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [selectedPortraits, setSelectedPortraits] = useState<string[]>([]);
   const [droppedImages, setDroppedImages] = useState([]);
   const [droppedVideos, setDroppedVideos] = useState([]);
   const [droppedAudioFiles, setDroppedAudioFiles] = useState([]);
@@ -68,11 +68,11 @@ export default function Home() {
     }
   };
 
-  const selectNewSelectedLocation = (index) => {
-    if (selectedLocation === index) {
+  const selectNewSelectedLocation = (filename: string) => {
+    if (selectedLocation === filename) {
       setSelectedLocation(null);
     } else {
-      setSelectedLocation(index);
+      setSelectedLocation(filename);
       if (activeVideos.background !== null) clearVideo();
     }
   };
@@ -87,12 +87,22 @@ export default function Home() {
         (img) => !img.file.name.includes("location")
       );
 
-      const locationSrc =
-        selectedLocation !== null ? locationImages[selectedLocation].src : null;
-      const portraitsSrcs = selectedPortraits.map((index) => ({
-        src: portraitImages[index].src,
-        name: portraitImages[index].file.name,
-      }));
+      // Find location image by filename instead of index
+      const locationImage =
+        selectedLocation !== null
+          ? locationImages.find((img) => img.file.name === selectedLocation)
+          : null;
+      const locationSrc = locationImage ? locationImage.src : null;
+
+      // Find portrait images by filename instead of index
+      const portraitsSrcs = selectedPortraits
+        .map((filename) => {
+          const image = portraitImages.find(
+            (img) => img.file.name === filename
+          );
+          return image ? { src: image.src, name: image.file.name } : null;
+        })
+        .filter(Boolean);
 
       // Now, every time scores, location, or portrait selections change, send the data to the popup
       const message = {
@@ -114,6 +124,7 @@ export default function Home() {
     popupWindow,
     showNames,
     blackOverlay,
+    droppedImages,
   ]);
 
   // Listen for messages from the popup window
