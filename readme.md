@@ -10,7 +10,8 @@ When creating files to import, the filename is used to automatically categories 
 Names from files are displayed as they exist, with any suffix or prefixes (listed below) removed, and remaining _ will be replaced with spaces. For charater profiles, Figereoth_Faeth.png would be displayed as "Figereoth Faeth".
 
 - ##### :musical_note: Sound Files:
-  - "_loop" suffix will mean the sound is loopable. Use this for music or ongoing background sounds.
+  - "_music" suffix will use for music. Only one music track can be playable at once, and it will loop as well as fade in or fade out.
+  - "_loop" suffix will mean the sound is loopable. Use this for ongoing background sounds. These can be played simultaniously to create layered environments.
 
 - ##### :national_park: Image Files:
   - using "_" as a prefix to avoid showing the character name on the screen. Instead, ??? will be shown.
