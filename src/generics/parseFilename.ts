@@ -5,6 +5,9 @@ export const parseFilename = (filename: string) => {
   // Check for '_loop' or 'loop' at the end and remove it
   baseName = baseName.replace(/_?loop$/, "");
 
+  // Check for '_music' or 'music' at the end and remove it
+  baseName = baseName.replace(/_?music$/, "");
+
   // Check for '_location' or 'location' at the end and remove it
   baseName = baseName.replace(/_?location$/, "");
 
