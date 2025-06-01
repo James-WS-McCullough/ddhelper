@@ -16,7 +16,9 @@ import { PlayerManager } from "../components/PlayerManager";
 import { EncounterManager } from "../components/EncounterManager";
 import { HeaderBar } from "../components/HeaderBar";
 import FileManager from "../components/FileManager/FileManager";
+import BattleMap from "../components/BattleMap";
 import { useNavigate, useLocation } from "react-router-dom";
+import { BattleMapStorage } from "../generics/localStorageHelpers";
 
 export default function Home() {
   const [scores, setScores] = useState([]);
@@ -28,6 +30,9 @@ export default function Home() {
   const [droppedAudioFiles, setDroppedAudioFiles] = useState([]);
   const [showNames, setShowNames] = useState(true);
   const [blackOverlay, setBlackOverlay] = useState(false);
+  const [battleMapData, setBattleMapData] = useState<BattleMapStorage | null>(
+    null
+  );
 
   // Replace the single video state with a video state object that tracks background and event videos separately
   const [activeVideos, setActiveVideos] = useState({
@@ -44,6 +49,7 @@ export default function Home() {
   const options = [
     { value: "all", label: "Home" },
     { value: "initiative", label: "Initiative Tracker" },
+    { value: "battlemap", label: "Battle Map" },
     { value: "deaththrowdisplay", label: "Death Throw Display" },
     { value: "playerconfig", label: "Player Config" },
     { value: "monsterconfig", label: "Monster Config" },
@@ -113,6 +119,8 @@ export default function Home() {
           portraitsSrcs,
           showNames,
           blackOverlay,
+          battleMapData,
+          droppedImages, // Include all dropped images for token matching
         },
       };
       popupWindow.postMessage(message, "*");
@@ -125,6 +133,7 @@ export default function Home() {
     showNames,
     blackOverlay,
     droppedImages,
+    battleMapData,
   ]);
 
   // Listen for messages from the popup window
@@ -228,6 +237,27 @@ export default function Home() {
             </TabPanel>
             <ScrollableTabPanel>
               <InitiativeTracker />
+            </ScrollableTabPanel>
+            <ScrollableTabPanel>
+              <BattleMap
+                droppedImages={droppedImages}
+                onBattleMapUpdate={(tokens, gridSize, showGrid) => {
+                  // Convert component tokens to storage format
+                  const storageTokens = tokens.map((token) => ({
+                    id: token.id,
+                    gridX: token.gridX,
+                    gridY: token.gridY,
+                    imageName: token.imageFile.file.name,
+                  }));
+
+                  const newBattleMapData = {
+                    tokens: storageTokens,
+                    gridSize,
+                    showGrid,
+                  };
+                  setBattleMapData(newBattleMapData);
+                }}
+              />
             </ScrollableTabPanel>
             <ScrollableTabPanel>
               <ScoreInput scores={scores} setScores={setScores} />

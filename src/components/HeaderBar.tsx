@@ -22,6 +22,7 @@ export const HeaderBar = () => {
   const options = [
     { value: "all", label: "Home" },
     { value: "initiative", label: "Initiative" },
+    { value: "battlemap", label: "Battle Map" },
     { value: "deaththrowdisplay", label: "Death Throw Display" },
     { value: "playerconfig", label: "Player Config" },
     { value: "monsterconfig", label: "Monster Config" },

@@ -34,11 +34,42 @@ export const loadInitiativeFromStorage = (): InitiativeStorage => {
     ? JSON.parse(storedInitiative)
     : {
         participants: [],
-        currentParticipant: { id: "", name: "", initiative: 0 },
+        currentParticipant: null,
       };
 };
 
 export const saveInitiativeToStorage = (initiative: InitiativeStorage) => {
   localStorage.setItem("initiative", JSON.stringify(initiative));
   console.log("Saved initiative to storage");
+};
+
+// Battle Map storage
+export interface GridToken {
+  id: string;
+  gridX: number;
+  gridY: number;
+  imageName: string; // Just the filename for reference
+}
+
+export interface BattleMapStorage {
+  tokens: GridToken[];
+  gridSize: number;
+  showGrid: boolean;
+}
+
+export const loadBattleMapFromStorage = (): BattleMapStorage => {
+  const storedBattleMap = localStorage.getItem("battleMap");
+  console.log("Loaded battle map from storage");
+  return storedBattleMap
+    ? JSON.parse(storedBattleMap)
+    : {
+        tokens: [],
+        gridSize: 20,
+        showGrid: false, // Default to hidden
+      };
+};
+
+export const saveBattleMapToStorage = (battleMap: BattleMapStorage) => {
+  localStorage.setItem("battleMap", JSON.stringify(battleMap));
+  console.log("Saved battle map to storage");
 };

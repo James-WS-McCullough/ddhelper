@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Image, Box, Text, SimpleGrid } from "@chakra-ui/react";
 import ScoreDisplay from "./ScoreDisplay";
+import BattleMap from "../components/BattleMap";
 import { parseFilename } from "../generics/parseFilename";
+import { BattleMapStorage } from "../generics/localStorageHelpers";
 
 type portrait = {
   src: string;
@@ -18,6 +20,10 @@ const Popup = () => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [useBlackOverlay, setUseBlackOverlay] = useState(false);
   const [overlayOpacity, setOverlayOpacity] = useState(0.5);
+  const [battleMapData, setBattleMapData] = useState<BattleMapStorage | null>(
+    null
+  );
+  const [droppedImages, setDroppedImages] = useState([]);
 
   useEffect(() => {
     const handleMessage = (event) => {
@@ -27,6 +33,8 @@ const Popup = () => {
         setPortraitsSrcs(event.data.data.portraitsSrcs);
         setShowNames(event.data.data.showNames);
         setUseBlackOverlay(event.data.data.blackOverlay);
+        setBattleMapData(event.data.data.battleMapData);
+        setDroppedImages(event.data.data.droppedImages || []);
       }
       if (event.data.type === "VIDEO_PLAY") {
         const videoIsBackgrond = event.data.data.isBackground;
@@ -184,7 +192,11 @@ const Popup = () => {
     <Box
       w="100vw"
       h="100vh"
-      bg={locationSrc ? `url(${locationSrc}) center/cover no-repeat` : "black"}
+      bg={
+        (!battleMapData || !battleMapData.showGrid) && locationSrc
+          ? `url(${locationSrc}) center/cover no-repeat`
+          : "black"
+      }
       position="relative"
       display="flex"
       alignItems="center"
@@ -246,28 +258,143 @@ const Popup = () => {
         />
       </Box>
 
-      {renderPortraits()}
-      <Box
-        position={"absolute"}
-        display="flex"
-        flexWrap="wrap"
-        justifyContent={receivedScores.length === 1 ? "center" : "flex-start"}
-        width="100%"
-      >
-        {receivedScores.map((score) => (
+      {/* Battle Map Display */}
+      {battleMapData && battleMapData.showGrid && (
+        <Box
+          position="absolute"
+          width="100%"
+          height="100%"
+          top="0"
+          left="0"
+          zIndex="10"
+          bg="gray.800"
+        >
+          {/* Battle map display with proper grid positioning */}
           <Box
-            key={score.name}
-            width={receivedScores.length === 1 ? "auto" : "50%"}
-            p={2} // this acts as spacing between the items
+            display="grid"
+            gridTemplateColumns={`repeat(${battleMapData.gridSize}, 1fr)`}
+            gridTemplateRows={`repeat(${battleMapData.gridSize}, 1fr)`}
+            width="100%"
+            height="100%"
+            position="relative"
+            gap="1px"
           >
-            <ScoreDisplay
-              name={score.name}
-              successes={score.successes}
-              failures={score.failures}
-            />
+            {/* Grid cells */}
+            {Array.from({
+              length: battleMapData.gridSize * battleMapData.gridSize,
+            }).map((_, index) => {
+              const x = index % battleMapData.gridSize;
+              const y = Math.floor(index / battleMapData.gridSize);
+              const token = battleMapData.tokens.find(
+                (t) => t.gridX === x && t.gridY === y
+              );
+
+              return (
+                <Box
+                  key={`${x}-${y}`}
+                  border={
+                    battleMapData.showGrid
+                      ? "1px solid rgba(255,255,255,0.2)"
+                      : "none"
+                  }
+                  position="relative"
+                  bg="transparent"
+                  minHeight="40px"
+                  minWidth="40px"
+                >
+                  {token && (
+                    <Box
+                      position="absolute"
+                      top="50%"
+                      left="50%"
+                      transform="translate(-50%, -50%)"
+                      width="80%"
+                      height="80%"
+                      borderRadius="50%"
+                      overflow="hidden"
+                      border="3px solid white"
+                      boxShadow="0 0 10px rgba(0,0,0,0.5)"
+                      zIndex="20"
+                    >
+                      {(() => {
+                        // Find the matching image from droppedImages
+                        const matchingImage = droppedImages.find(
+                          (img) => img.file.name === token.imageName
+                        );
+
+                        if (matchingImage) {
+                          return (
+                            <Image
+                              src={matchingImage.src}
+                              alt={token.imageName}
+                              width="100%"
+                              height="100%"
+                              objectFit="cover"
+                            />
+                          );
+                        } else {
+                          // Fallback to placeholder if image not found
+                          return (
+                            <Box
+                              width="100%"
+                              height="100%"
+                              bg="teal.500"
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="center"
+                              fontSize="xs"
+                              color="white"
+                              fontWeight="bold"
+                              textAlign="center"
+                            >
+                              {token.imageName
+                                ? token.imageName
+                                    .split(".")[0]
+                                    .substring(0, 3)
+                                    .toUpperCase()
+                                : "TOK"}
+                            </Box>
+                          );
+                        }
+                      })()}
+                    </Box>
+                  )}
+                </Box>
+              );
+            })}
           </Box>
-        ))}
-      </Box>
+        </Box>
+      )}
+
+      {/* Only show portraits and scores if battle map is not active */}
+      {(!battleMapData || !battleMapData.showGrid) && (
+        <>
+          {renderPortraits()}
+          <Box
+            position={"absolute"}
+            display="flex"
+            flexWrap="wrap"
+            justifyContent={
+              receivedScores.length === 1 ? "center" : "flex-start"
+            }
+            width="100%"
+          >
+            {receivedScores.map((score) => (
+              <Box
+                key={score.name}
+                width={receivedScores.length === 1 ? "auto" : "50%"}
+                p={2} // this acts as spacing between the items
+              >
+                <ScoreDisplay
+                  name={score.name}
+                  successes={score.successes}
+                  failures={score.failures}
+                />
+              </Box>
+            ))}
+          </Box>
+        </>
+      )}
     </Box>
   );
 };
