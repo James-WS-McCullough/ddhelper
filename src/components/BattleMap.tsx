@@ -29,6 +29,7 @@ import {
   FormLabel,
   Spinner,
 } from "@chakra-ui/react";
+import { AddIcon, MinusIcon } from "@chakra-ui/icons";
 import GridOnIcon from "@mui/icons-material/GridOn";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -55,12 +56,17 @@ interface BattleMapProps {
   onBattleMapUpdate?: (
     tokens: GridToken[],
     gridSize: number,
-    showGrid: boolean
+    showGrid: boolean,
+    zoomLevel?: number,
+    focusedTile?: { x: number; y: number }
   ) => void;
   tokens?: GridToken[];
   gridSize?: number;
   showGrid?: boolean;
   isDisplayMode?: boolean;
+  zoomLevel?: number;
+  onZoomChange?: (newZoom: number) => void;
+  onFocusChange?: (focusedTile: { x: number; y: number } | null) => void;
 }
 
 interface GridCellProps {
@@ -68,6 +74,7 @@ interface GridCellProps {
   y: number;
   token?: GridToken;
   isSelected: boolean;
+  isFocused: boolean;
   localShowGrid: boolean;
   isDisplayMode: boolean;
   onGridClick: (x: number, y: number) => void;
@@ -80,6 +87,7 @@ const GridCell: React.FC<GridCellProps> = ({
   y,
   token,
   isSelected,
+  isFocused,
   localShowGrid,
   isDisplayMode,
   onGridClick,
@@ -89,14 +97,15 @@ const GridCell: React.FC<GridCellProps> = ({
   return (
     <GridItem
       border="1px solid" // Always show grid lines in back office
-      borderColor="gray.600"
-      bg={isSelected ? "blue.500" : "transparent"}
+      borderColor={isFocused ? "yellow.400" : "gray.600"}
+      bg={isSelected ? "blue.500" : isFocused ? "yellow.100" : "transparent"}
       position="relative"
       w="100%"
       h="100%"
       cursor={isDisplayMode ? "default" : "pointer"}
       onClick={() => onGridClick(x, y)}
       _hover={isDisplayMode ? {} : { bg: "gray.700" }}
+      transition="all 0.2s ease"
     >
       {token && (
         <Box position="relative" width="100%" height="100%">
@@ -138,12 +147,20 @@ const BattleMap: React.FC<BattleMapProps> = ({
   gridSize = 20,
   showGrid = false, // Default to hidden
   isDisplayMode = false,
+  zoomLevel = 1.0,
+  onZoomChange,
+  onFocusChange,
 }) => {
   // Initialize state with empty arrays and load from storage if needed
   const [localTokens, setLocalTokens] = useState<GridToken[]>([]);
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
+  const [focusedTile, setFocusedTile] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const [localGridSize, setLocalGridSize] = useState(gridSize);
   const [localShowGrid, setLocalShowGrid] = useState(showGrid);
+  const [localZoomLevel, setLocalZoomLevel] = useState(zoomLevel);
   const [isLoaded, setIsLoaded] = useState(false);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -194,6 +211,40 @@ const BattleMap: React.FC<BattleMapProps> = ({
     }
   }, [showGrid, isLoaded]);
 
+  useEffect(() => {
+    if (isLoaded) {
+      setLocalZoomLevel(zoomLevel);
+    }
+  }, [zoomLevel, isLoaded]);
+
+  // Handle keyboard shortcuts for zoom
+  useEffect(() => {
+    if (isDisplayMode) return; // Only handle zoom in back office
+
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey) {
+        if (event.key === "=" || event.key === "+") {
+          event.preventDefault();
+          const newZoom = Math.min(2.0, localZoomLevel + 0.25);
+          setLocalZoomLevel(newZoom);
+          onZoomChange?.(newZoom);
+        } else if (event.key === "-") {
+          event.preventDefault();
+          const newZoom = Math.max(0.5, localZoomLevel - 0.25);
+          setLocalZoomLevel(newZoom);
+          onZoomChange?.(newZoom);
+        } else if (event.key === "0") {
+          event.preventDefault();
+          setLocalZoomLevel(1.0);
+          onZoomChange?.(1.0);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [localZoomLevel, onZoomChange, isDisplayMode]);
+
   const handleTokensUpdate = useCallback(
     (newTokens: GridToken[]) => {
       if (!isLoaded) return; // Don't update storage until component is fully loaded
@@ -220,9 +271,22 @@ const BattleMap: React.FC<BattleMapProps> = ({
         saveBattleMapToStorage(battleMapData);
       }
 
-      onBattleMapUpdate?.(newTokens, localGridSize, localShowGrid);
+      onBattleMapUpdate?.(
+        newTokens,
+        localGridSize,
+        localShowGrid,
+        localZoomLevel,
+        focusedTile
+      );
     },
-    [onBattleMapUpdate, localGridSize, localShowGrid, isLoaded]
+    [
+      onBattleMapUpdate,
+      localGridSize,
+      localShowGrid,
+      localZoomLevel,
+      focusedTile,
+      isLoaded,
+    ]
   );
 
   const handleSettingsChange = useCallback(
@@ -245,9 +309,15 @@ const BattleMap: React.FC<BattleMapProps> = ({
       };
 
       saveBattleMapToStorage(battleMapData);
-      onBattleMapUpdate?.(localTokens, newGridSize, newShowGrid);
+      onBattleMapUpdate?.(
+        localTokens,
+        newGridSize,
+        newShowGrid,
+        localZoomLevel,
+        focusedTile
+      );
     },
-    [localTokens, onBattleMapUpdate]
+    [localTokens, onBattleMapUpdate, localZoomLevel, focusedTile]
   );
 
   const applySettings = () => {
@@ -299,10 +369,20 @@ const BattleMap: React.FC<BattleMapProps> = ({
       token.id === tokenId ? { ...token, gridX: newX, gridY: newY } : token
     );
     handleTokensUpdate(updatedTokens);
+
+    // Update focus to the new position when a character is moved
+    const newFocusedTile = { x: newX, y: newY };
+    setFocusedTile(newFocusedTile);
+    onFocusChange?.(newFocusedTile);
   };
 
   const handleGridClick = (x: number, y: number) => {
     if (isDisplayMode) return;
+
+    // Set focus on the clicked tile
+    const newFocusedTile = { x, y };
+    setFocusedTile(newFocusedTile);
+    onFocusChange?.(newFocusedTile);
 
     // Check if there's already a token at this position
     const existingToken = localTokens.find(
@@ -347,6 +427,7 @@ const BattleMap: React.FC<BattleMapProps> = ({
       for (let x = 0; x < localGridSize; x++) {
         const token = localTokens.find((t) => t.gridX === x && t.gridY === y);
         const isSelected = selectedToken === token?.id;
+        const isFocused = focusedTile?.x === x && focusedTile?.y === y;
 
         cells.push(
           <GridCell
@@ -355,6 +436,7 @@ const BattleMap: React.FC<BattleMapProps> = ({
             y={y}
             token={token}
             isSelected={isSelected}
+            isFocused={isFocused}
             localShowGrid={localShowGrid}
             isDisplayMode={isDisplayMode}
             onGridClick={handleGridClick}
@@ -400,27 +482,73 @@ const BattleMap: React.FC<BattleMapProps> = ({
               Battle Map ({localGridSize}x{localGridSize})
             </Text>
           </HStack>
-          <HStack spacing={2}>
-            <Button
-              leftIcon={<GridOnIcon />}
-              onClick={() => {
-                const newShowBattleMap = !localShowGrid;
-                handleSettingsChange(localGridSize, newShowBattleMap);
-              }}
-              colorScheme={localShowGrid ? "green" : "gray"}
-              size="sm"
-            >
-              {localShowGrid ? "Hide Battle Map" : "Show Battle Map"}
-            </Button>
-            <Button
-              leftIcon={<DeleteIcon />}
-              onClick={clearAllTokens}
-              colorScheme="red"
-              size="sm"
-              isDisabled={localTokens.length === 0}
-            >
-              Clear All
-            </Button>
+          <HStack spacing={4}>
+            {/* Zoom Controls */}
+            <HStack spacing={2} bg="gray.700" p={2} borderRadius="md">
+              <IconButton
+                aria-label="Zoom out"
+                icon={<MinusIcon />}
+                size="sm"
+                onClick={() => {
+                  const newZoom = Math.max(0.5, localZoomLevel - 0.25);
+                  setLocalZoomLevel(newZoom);
+                  onZoomChange?.(newZoom);
+                }}
+                isDisabled={localZoomLevel <= 0.5}
+                colorScheme="gray"
+                variant="outline"
+              />
+              <Text
+                color="white"
+                fontSize="sm"
+                minW="60px"
+                textAlign="center"
+                cursor="pointer"
+                onClick={() => {
+                  setLocalZoomLevel(1.0);
+                  onZoomChange?.(1.0);
+                }}
+                _hover={{ color: "blue.300" }}
+                title="Click to reset zoom (Ctrl+0)"
+              >
+                {Math.round(localZoomLevel * 100)}%
+              </Text>
+              <IconButton
+                aria-label="Zoom in"
+                icon={<AddIcon />}
+                size="sm"
+                onClick={() => {
+                  const newZoom = Math.min(2.0, localZoomLevel + 0.25);
+                  setLocalZoomLevel(newZoom);
+                  onZoomChange?.(newZoom);
+                }}
+                isDisabled={localZoomLevel >= 2.0}
+                colorScheme="gray"
+                variant="outline"
+              />
+            </HStack>
+            <HStack spacing={2}>
+              <Button
+                leftIcon={<GridOnIcon />}
+                onClick={() => {
+                  const newShowBattleMap = !localShowGrid;
+                  handleSettingsChange(localGridSize, newShowBattleMap);
+                }}
+                colorScheme={localShowGrid ? "green" : "gray"}
+                size="sm"
+              >
+                {localShowGrid ? "Hide Battle Map" : "Show Battle Map"}
+              </Button>
+              <Button
+                leftIcon={<DeleteIcon />}
+                onClick={clearAllTokens}
+                colorScheme="red"
+                size="sm"
+                isDisabled={localTokens.length === 0}
+              >
+                Clear All
+              </Button>
+            </HStack>
           </HStack>
         </HStack>
       )}

@@ -33,6 +33,11 @@ export default function Home() {
   const [battleMapData, setBattleMapData] = useState<BattleMapStorage | null>(
     null
   );
+  const [battleMapZoom, setBattleMapZoom] = useState(1.0);
+  const [focusedTile, setFocusedTile] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   // Replace the single video state with a video state object that tracks background and event videos separately
   const [activeVideos, setActiveVideos] = useState({
@@ -121,6 +126,8 @@ export default function Home() {
           blackOverlay,
           battleMapData,
           droppedImages, // Include all dropped images for token matching
+          battleMapZoom,
+          focusedTile,
         },
       };
       popupWindow.postMessage(message, "*");
@@ -134,6 +141,8 @@ export default function Home() {
     blackOverlay,
     droppedImages,
     battleMapData,
+    battleMapZoom,
+    focusedTile,
   ]);
 
   // Listen for messages from the popup window
@@ -241,7 +250,16 @@ export default function Home() {
             <ScrollableTabPanel>
               <BattleMap
                 droppedImages={droppedImages}
-                onBattleMapUpdate={(tokens, gridSize, showGrid) => {
+                zoomLevel={battleMapZoom}
+                onZoomChange={setBattleMapZoom}
+                onFocusChange={setFocusedTile}
+                onBattleMapUpdate={(
+                  tokens,
+                  gridSize,
+                  showGrid,
+                  zoomLevel,
+                  focusedTile
+                ) => {
                   // Convert component tokens to storage format
                   const storageTokens = tokens.map((token) => ({
                     id: token.id,
@@ -256,6 +274,14 @@ export default function Home() {
                     showGrid,
                   };
                   setBattleMapData(newBattleMapData);
+
+                  // Update zoom and focus if provided
+                  if (zoomLevel !== undefined) {
+                    setBattleMapZoom(zoomLevel);
+                  }
+                  if (focusedTile !== undefined) {
+                    setFocusedTile(focusedTile);
+                  }
                 }}
               />
             </ScrollableTabPanel>
