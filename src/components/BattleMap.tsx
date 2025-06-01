@@ -684,7 +684,7 @@ const BattleMap: React.FC<BattleMapProps> = ({
                   const newShowBattleMap = !localShowGrid;
                   handleSettingsChange(localGridSize, newShowBattleMap);
                 }}
-                colorScheme={localShowGrid ? "green" : "gray"}
+                colorScheme={localShowGrid ? "orange" : "blue"}
                 size="sm"
               >
                 {localShowGrid ? "Hide Battle Map" : "Show Battle Map"}
