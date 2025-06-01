@@ -7,6 +7,9 @@ interface PopupBattleMapProps {
   droppedImages: any[];
   zoomLevel: number;
   focusedTile?: { x: number; y: number } | null;
+  selectedToken?: string | null;
+  isInMoveMode?: boolean;
+  movementRange?: number;
 }
 
 const PopupBattleMap: React.FC<PopupBattleMapProps> = ({
@@ -14,6 +17,9 @@ const PopupBattleMap: React.FC<PopupBattleMapProps> = ({
   droppedImages,
   zoomLevel,
   focusedTile,
+  selectedToken,
+  isInMoveMode = false,
+  movementRange = 6,
 }) => {
   // Calculate tile size based on zoom level (minimum 30px, maximum 120px)
   const baseTileSize = 60; // Base size in pixels
@@ -22,6 +28,25 @@ const PopupBattleMap: React.FC<PopupBattleMapProps> = ({
   // Calculate grid dimensions
   const gridWidth = tileSize * battleMapData.gridSize;
   const gridHeight = tileSize * battleMapData.gridSize;
+
+  // Helper function to calculate if a tile is within movement range
+  const isWithinMovementRange = (
+    targetX: number,
+    targetY: number,
+    tokenX: number,
+    tokenY: number,
+    range: number
+  ): boolean => {
+    const distance = Math.abs(targetX - tokenX) + Math.abs(targetY - tokenY);
+    return distance <= range;
+  };
+
+  // Helper function to get selected token position
+  const getSelectedTokenPosition = (): { x: number; y: number } | null => {
+    if (!selectedToken) return null;
+    const token = battleMapData.tokens.find((t) => t.id === selectedToken);
+    return token ? { x: token.gridX, y: token.gridY } : null;
+  };
 
   // Ref for the scrollable container
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -127,15 +152,44 @@ const PopupBattleMap: React.FC<PopupBattleMapProps> = ({
               (t) => t.gridX === x && t.gridY === y
             );
 
+            // Calculate movement range highlighting
+            const selectedTokenPos = getSelectedTokenPosition();
+            const isSelected = selectedToken === token?.id;
+            const isInMovementRange =
+              isInMoveMode &&
+              selectedTokenPos &&
+              !token && // Don't highlight occupied squares
+              isWithinMovementRange(
+                x,
+                y,
+                selectedTokenPos.x,
+                selectedTokenPos.y,
+                movementRange
+              );
+
+            // Determine background color based on state (no focus highlighting in popup)
+            let bgColor = "transparent";
+            if (isSelected) {
+              bgColor = "rgba(59, 130, 246, 0.5)"; // Blue for selected
+            } else if (isInMovementRange) {
+              bgColor = "rgba(34, 197, 94, 0.3)"; // Green for movement range
+            }
+
             return (
               <Box
                 key={`${x}-${y}`}
                 data-tile
                 data-x={x}
                 data-y={y}
-                border="1px solid rgba(255,255,255,0.2)"
+                border={
+                  isSelected
+                    ? "2px solid rgb(59, 130, 246)"
+                    : isInMovementRange
+                    ? "2px solid rgb(34, 197, 94)"
+                    : "1px solid rgba(255,255,255,0.2)"
+                }
                 position="relative"
-                bg="transparent"
+                bg={bgColor}
                 width={`${tileSize}px`}
                 height={`${tileSize}px`}
                 transition="all 0.2s ease"

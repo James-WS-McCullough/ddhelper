@@ -258,7 +258,10 @@ export default function Home() {
                   gridSize,
                   showGrid,
                   zoomLevel,
-                  focusedTile
+                  focusedTile,
+                  selectedToken,
+                  isInMoveMode,
+                  movementRange
                 ) => {
                   // Convert component tokens to storage format
                   const storageTokens = tokens.map((token) => ({
@@ -281,6 +284,19 @@ export default function Home() {
                   }
                   if (focusedTile !== undefined) {
                     setFocusedTile(focusedTile);
+                  }
+
+                  // Send movement data to popup if available
+                  if (popupWindow && !popupWindow.closed) {
+                    const message = {
+                      type: "MOVEMENT_UPDATE",
+                      data: {
+                        selectedToken,
+                        isInMoveMode,
+                        movementRange,
+                      },
+                    };
+                    popupWindow.postMessage(message, "*");
                   }
                 }}
               />

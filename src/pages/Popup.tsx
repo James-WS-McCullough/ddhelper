@@ -29,6 +29,9 @@ const Popup = () => {
     x: number;
     y: number;
   } | null>(null);
+  const [selectedToken, setSelectedToken] = useState<string | null>(null);
+  const [isInMoveMode, setIsInMoveMode] = useState(false);
+  const [movementRange, setMovementRange] = useState(6); // Default 30ft (6 squares)
 
   useEffect(() => {
     const handleMessage = (event) => {
@@ -42,6 +45,11 @@ const Popup = () => {
         setDroppedImages(event.data.data.droppedImages || []);
         setBattleMapZoom(event.data.data.battleMapZoom || 1.0);
         setFocusedTile(event.data.data.focusedTile || null);
+      }
+      if (event.data.type === "MOVEMENT_UPDATE") {
+        setSelectedToken(event.data.data.selectedToken);
+        setIsInMoveMode(event.data.data.isInMoveMode);
+        setMovementRange(event.data.data.movementRange);
       }
       if (event.data.type === "VIDEO_PLAY") {
         const videoIsBackgrond = event.data.data.isBackground;
@@ -272,6 +280,9 @@ const Popup = () => {
           droppedImages={droppedImages}
           zoomLevel={battleMapZoom}
           focusedTile={focusedTile}
+          selectedToken={selectedToken}
+          isInMoveMode={isInMoveMode}
+          movementRange={movementRange}
         />
       )}
 

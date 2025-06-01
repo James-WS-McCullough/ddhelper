@@ -33,6 +33,7 @@ import { AddIcon, MinusIcon } from "@chakra-ui/icons";
 import GridOnIcon from "@mui/icons-material/GridOn";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SettingsIcon from "@mui/icons-material/Settings";
+import DirectionsWalkIcon from "@mui/icons-material/DirectionsWalk";
 import { parseFilename } from "../generics/parseFilename";
 import {
   loadBattleMapFromStorage,
@@ -58,7 +59,10 @@ interface BattleMapProps {
     gridSize: number,
     showGrid: boolean,
     zoomLevel?: number,
-    focusedTile?: { x: number; y: number }
+    focusedTile?: { x: number; y: number },
+    selectedToken?: string | null,
+    isInMoveMode?: boolean,
+    movementRange?: number
   ) => void;
   tokens?: GridToken[];
   gridSize?: number;
@@ -75,6 +79,7 @@ interface GridCellProps {
   token?: GridToken;
   isSelected: boolean;
   isFocused: boolean;
+  isInMovementRange: boolean;
   localShowGrid: boolean;
   isDisplayMode: boolean;
   onGridClick: (x: number, y: number) => void;
@@ -88,23 +93,40 @@ const GridCell: React.FC<GridCellProps> = ({
   token,
   isSelected,
   isFocused,
+  isInMovementRange,
   localShowGrid,
   isDisplayMode,
   onGridClick,
   onRemoveToken,
   setSelectedToken,
 }) => {
+  // Determine background color based on state
+  let bgColor = "transparent";
+  if (isSelected) {
+    bgColor = "blue.500";
+  } else if (isFocused) {
+    bgColor = "yellow.100";
+  } else if (isInMovementRange) {
+    bgColor = "green.200";
+  }
+
   return (
     <GridItem
       border="1px solid" // Always show grid lines in back office
-      borderColor={isFocused ? "yellow.400" : "gray.600"}
-      bg={isSelected ? "blue.500" : isFocused ? "yellow.100" : "transparent"}
+      borderColor={
+        isFocused ? "yellow.400" : isInMovementRange ? "green.400" : "gray.600"
+      }
+      bg={bgColor}
       position="relative"
       w="100%"
       h="100%"
       cursor={isDisplayMode ? "default" : "pointer"}
       onClick={() => onGridClick(x, y)}
-      _hover={isDisplayMode ? {} : { bg: "gray.700" }}
+      _hover={
+        isDisplayMode
+          ? {}
+          : { bg: isInMovementRange ? "green.300" : "gray.700" }
+      }
       transition="all 0.2s ease"
     >
       {token && (
@@ -118,22 +140,6 @@ const GridCell: React.FC<GridCellProps> = ({
             draggable={false}
             pointerEvents="none"
           />
-          {!isDisplayMode && isSelected && (
-            <IconButton
-              aria-label="Remove token"
-              icon={<DeleteIcon />}
-              size="xs"
-              colorScheme="red"
-              position="absolute"
-              top="2px"
-              right="2px"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemoveToken(token.id);
-                setSelectedToken(null);
-              }}
-            />
-          )}
         </Box>
       )}
     </GridItem>
@@ -154,6 +160,8 @@ const BattleMap: React.FC<BattleMapProps> = ({
   // Initialize state with empty arrays and load from storage if needed
   const [localTokens, setLocalTokens] = useState<GridToken[]>([]);
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
+  const [isInMoveMode, setIsInMoveMode] = useState(false);
+  const [movementRange, setMovementRange] = useState(6); // Default 30ft (6 squares)
   const [focusedTile, setFocusedTile] = useState<{
     x: number;
     y: number;
@@ -170,6 +178,25 @@ const BattleMap: React.FC<BattleMapProps> = ({
     onClose: onSettingsClose,
   } = useDisclosure();
   const toast = useToast();
+
+  // Helper function to calculate if a tile is within movement range
+  const isWithinMovementRange = (
+    targetX: number,
+    targetY: number,
+    tokenX: number,
+    tokenY: number,
+    range: number
+  ): boolean => {
+    const distance = Math.abs(targetX - tokenX) + Math.abs(targetY - tokenY);
+    return distance <= range;
+  };
+
+  // Helper function to get selected token position
+  const getSelectedTokenPosition = (): { x: number; y: number } | null => {
+    if (!selectedToken) return null;
+    const token = localTokens.find((t) => t.id === selectedToken);
+    return token ? { x: token.gridX, y: token.gridY } : null;
+  };
 
   // Load from storage on mount
   useEffect(() => {
@@ -245,6 +272,33 @@ const BattleMap: React.FC<BattleMapProps> = ({
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [localZoomLevel, onZoomChange, isDisplayMode]);
 
+  // Send movement state updates immediately to popup
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    onBattleMapUpdate?.(
+      localTokens,
+      localGridSize,
+      localShowGrid,
+      localZoomLevel,
+      focusedTile,
+      selectedToken,
+      isInMoveMode,
+      movementRange
+    );
+  }, [
+    selectedToken,
+    isInMoveMode,
+    movementRange,
+    isLoaded,
+    onBattleMapUpdate,
+    localTokens,
+    localGridSize,
+    localShowGrid,
+    localZoomLevel,
+    focusedTile,
+  ]);
+
   const handleTokensUpdate = useCallback(
     (newTokens: GridToken[]) => {
       if (!isLoaded) return; // Don't update storage until component is fully loaded
@@ -276,7 +330,10 @@ const BattleMap: React.FC<BattleMapProps> = ({
         localGridSize,
         localShowGrid,
         localZoomLevel,
-        focusedTile
+        focusedTile,
+        selectedToken,
+        isInMoveMode,
+        movementRange
       );
     },
     [
@@ -285,6 +342,9 @@ const BattleMap: React.FC<BattleMapProps> = ({
       localShowGrid,
       localZoomLevel,
       focusedTile,
+      selectedToken,
+      isInMoveMode,
+      movementRange,
       isLoaded,
     ]
   );
@@ -314,10 +374,21 @@ const BattleMap: React.FC<BattleMapProps> = ({
         newGridSize,
         newShowGrid,
         localZoomLevel,
-        focusedTile
+        focusedTile,
+        selectedToken,
+        isInMoveMode,
+        movementRange
       );
     },
-    [localTokens, onBattleMapUpdate, localZoomLevel, focusedTile]
+    [
+      localTokens,
+      onBattleMapUpdate,
+      localZoomLevel,
+      focusedTile,
+      selectedToken,
+      isInMoveMode,
+      movementRange,
+    ]
   );
 
   const applySettings = () => {
@@ -390,14 +461,52 @@ const BattleMap: React.FC<BattleMapProps> = ({
     );
 
     if (existingToken) {
+      // If clicking on the same selected token, deselect it
+      if (selectedToken === existingToken.id) {
+        setSelectedToken(null);
+        setIsInMoveMode(false);
+        return;
+      }
+      // Otherwise, select this token
       setSelectedToken(existingToken.id);
+      setIsInMoveMode(false);
       return;
     }
 
-    // If we have a selected token, move it here
+    // If we're in move mode and have a selected token, move it here if within range
+    if (isInMoveMode && selectedToken) {
+      const selectedTokenPos = getSelectedTokenPosition();
+      if (
+        selectedTokenPos &&
+        isWithinMovementRange(
+          x,
+          y,
+          selectedTokenPos.x,
+          selectedTokenPos.y,
+          movementRange
+        )
+      ) {
+        moveToken(selectedToken, x, y);
+        setSelectedToken(null);
+        setIsInMoveMode(false);
+        return;
+      } else {
+        // Show error if trying to move outside range
+        toast({
+          title: "Invalid move",
+          description: "Target is outside movement range",
+          status: "error",
+          duration: 2000,
+          isClosable: true,
+        });
+        return;
+      }
+    }
+
+    // If we have a selected token but not in move mode, clear selection
     if (selectedToken) {
-      moveToken(selectedToken, x, y);
       setSelectedToken(null);
+      setIsInMoveMode(false);
       return;
     }
 
@@ -423,11 +532,24 @@ const BattleMap: React.FC<BattleMapProps> = ({
 
   const renderGrid = () => {
     const cells = [];
+    const selectedTokenPos = getSelectedTokenPosition();
+
     for (let y = 0; y < localGridSize; y++) {
       for (let x = 0; x < localGridSize; x++) {
         const token = localTokens.find((t) => t.gridX === x && t.gridY === y);
         const isSelected = selectedToken === token?.id;
         const isFocused = focusedTile?.x === x && focusedTile?.y === y;
+        const isInMovementRange =
+          isInMoveMode &&
+          selectedTokenPos &&
+          !token && // Don't highlight occupied squares
+          isWithinMovementRange(
+            x,
+            y,
+            selectedTokenPos.x,
+            selectedTokenPos.y,
+            movementRange
+          );
 
         cells.push(
           <GridCell
@@ -437,6 +559,7 @@ const BattleMap: React.FC<BattleMapProps> = ({
             token={token}
             isSelected={isSelected}
             isFocused={isFocused}
+            isInMovementRange={isInMovementRange}
             localShowGrid={localShowGrid}
             isDisplayMode={isDisplayMode}
             onGridClick={handleGridClick}
@@ -448,6 +571,33 @@ const BattleMap: React.FC<BattleMapProps> = ({
     }
     return cells;
   };
+
+  // Send movement state updates immediately to popup
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    onBattleMapUpdate?.(
+      localTokens,
+      localGridSize,
+      localShowGrid,
+      localZoomLevel,
+      focusedTile,
+      selectedToken,
+      isInMoveMode,
+      movementRange
+    );
+  }, [
+    selectedToken,
+    isInMoveMode,
+    movementRange,
+    isLoaded,
+    onBattleMapUpdate,
+    localTokens,
+    localGridSize,
+    localShowGrid,
+    localZoomLevel,
+    focusedTile,
+  ]);
 
   // Show loading state until component is fully initialized
   if (!isLoaded) {
@@ -587,19 +737,94 @@ const BattleMap: React.FC<BattleMapProps> = ({
           border="1px solid"
           borderColor="gray.600"
           zIndex={10}
+          minWidth="300px"
         >
-          <Text fontSize="sm" color="white" textAlign="center">
-            Token selected. Click on an empty grid cell to move it, or click the
-            delete button to remove it.
-          </Text>
-          <Button
-            size="sm"
-            mt={2}
-            onClick={() => setSelectedToken(null)}
-            width="100%"
-          >
-            Cancel
-          </Button>
+          <VStack spacing={3} align="center">
+            <Text fontSize="sm" color="white" textAlign="center">
+              {(() => {
+                const token = localTokens.find((t) => t.id === selectedToken);
+                return token
+                  ? parseFilename(token.imageFile.file.name)
+                  : "Token";
+              })()}{" "}
+              selected
+            </Text>
+
+            {isInMoveMode && (
+              <VStack spacing={2} align="center">
+                <Text fontSize="xs" color="green.200">
+                  Move Mode Active - Range: {movementRange * 5}ft
+                </Text>
+                <HStack spacing={2}>
+                  <IconButton
+                    aria-label="Decrease range"
+                    icon={<MinusIcon />}
+                    size="xs"
+                    onClick={() =>
+                      setMovementRange(Math.max(1, movementRange - 1))
+                    }
+                    isDisabled={movementRange <= 1}
+                  />
+                  <Text
+                    fontSize="xs"
+                    color="white"
+                    minW="40px"
+                    textAlign="center"
+                  >
+                    {movementRange * 5}ft
+                  </Text>
+                  <IconButton
+                    aria-label="Increase range"
+                    icon={<AddIcon />}
+                    size="xs"
+                    onClick={() =>
+                      setMovementRange(Math.min(12, movementRange + 1))
+                    }
+                    isDisabled={movementRange >= 12}
+                  />
+                </HStack>
+              </VStack>
+            )}
+
+            <HStack spacing={2} width="100%">
+              <Button
+                leftIcon={<DirectionsWalkIcon />}
+                size="sm"
+                colorScheme={isInMoveMode ? "green" : "blue"}
+                onClick={() => setIsInMoveMode(!isInMoveMode)}
+                flex={1}
+              >
+                {isInMoveMode ? "Exit Move" : "Move"}
+              </Button>
+              <Button
+                leftIcon={<DeleteIcon />}
+                size="sm"
+                colorScheme="red"
+                onClick={() => {
+                  if (selectedToken) {
+                    removeToken(selectedToken);
+                    setSelectedToken(null);
+                    setIsInMoveMode(false);
+                  }
+                }}
+                flex={1}
+              >
+                Delete
+              </Button>
+            </HStack>
+
+            <Button
+              size="sm"
+              onClick={() => {
+                setSelectedToken(null);
+                setIsInMoveMode(false);
+              }}
+              width="100%"
+              variant="outline"
+            >
+              Cancel
+            </Button>
+          </VStack>
         </Box>
       )}
 
