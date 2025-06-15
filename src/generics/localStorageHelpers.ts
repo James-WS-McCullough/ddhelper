@@ -53,20 +53,53 @@ export interface GridToken {
 
 export interface BattleMapStorage {
   tokens: GridToken[];
-  gridSize: number;
+  gridWidth: number;
+  gridHeight: number;
   showGrid: boolean;
+  backgroundImage?: string; // Base64 encoded image data
+  // Legacy support for backwards compatibility
+  gridSize?: number;
 }
 
 export const loadBattleMapFromStorage = (): BattleMapStorage => {
   const storedBattleMap = localStorage.getItem("battleMap");
   console.log("Loaded battle map from storage");
-  return storedBattleMap
-    ? JSON.parse(storedBattleMap)
-    : {
-        tokens: [],
-        gridSize: 20,
-        showGrid: false, // Default to hidden
+
+  if (storedBattleMap) {
+    const parsed = JSON.parse(storedBattleMap);
+
+    // Handle backwards compatibility - if gridSize exists but not gridWidth/gridHeight
+    if (
+      parsed.gridSize !== undefined &&
+      (parsed.gridWidth === undefined || parsed.gridHeight === undefined)
+    ) {
+      return {
+        tokens: parsed.tokens || [],
+        gridWidth: parsed.gridSize,
+        gridHeight: parsed.gridSize,
+        showGrid: parsed.showGrid !== undefined ? parsed.showGrid : false,
+        backgroundImage: parsed.backgroundImage,
       };
+    }
+
+    // Return the stored data, providing defaults for missing properties
+    return {
+      tokens: parsed.tokens || [],
+      gridWidth: parsed.gridWidth || 20,
+      gridHeight: parsed.gridHeight || 20,
+      showGrid: parsed.showGrid !== undefined ? parsed.showGrid : false,
+      backgroundImage: parsed.backgroundImage,
+    };
+  }
+
+  // Default values for new installations
+  return {
+    tokens: [],
+    gridWidth: 20,
+    gridHeight: 20,
+    showGrid: false, // Default to hidden
+    backgroundImage: undefined,
+  };
 };
 
 export const saveBattleMapToStorage = (battleMap: BattleMapStorage) => {

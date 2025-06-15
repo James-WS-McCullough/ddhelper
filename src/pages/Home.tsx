@@ -18,7 +18,10 @@ import { HeaderBar } from "../components/HeaderBar";
 import FileManager from "../components/FileManager/FileManager";
 import BattleMap from "../components/BattleMap";
 import { useNavigate, useLocation } from "react-router-dom";
-import { BattleMapStorage } from "../generics/localStorageHelpers";
+import {
+  BattleMapStorage,
+  loadBattleMapFromStorage,
+} from "../generics/localStorageHelpers";
 
 export default function Home() {
   const [scores, setScores] = useState([]);
@@ -255,7 +258,8 @@ export default function Home() {
                 onFocusChange={setFocusedTile}
                 onBattleMapUpdate={(
                   tokens,
-                  gridSize,
+                  gridWidth,
+                  gridHeight,
                   showGrid,
                   zoomLevel,
                   focusedTile,
@@ -271,10 +275,15 @@ export default function Home() {
                     imageName: token.imageFile.file.name,
                   }));
 
+                  // Load background image from storage to include in popup data
+                  const storedData = loadBattleMapFromStorage();
+
                   const newBattleMapData = {
                     tokens: storageTokens,
-                    gridSize,
+                    gridWidth,
+                    gridHeight,
                     showGrid,
+                    backgroundImage: storedData.backgroundImage,
                   };
                   setBattleMapData(newBattleMapData);
 

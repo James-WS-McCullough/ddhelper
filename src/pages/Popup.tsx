@@ -19,7 +19,7 @@ const Popup = () => {
   const eventVideoRef = useRef(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [useBlackOverlay, setUseBlackOverlay] = useState(false);
-  const [overlayOpacity, setOverlayOpacity] = useState(0.5);
+  const [overlayOpacity, setOverlayOpacity] = useState(0);
   const [battleMapData, setBattleMapData] = useState<BattleMapStorage | null>(
     null
   );

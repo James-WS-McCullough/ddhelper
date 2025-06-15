@@ -28,12 +28,15 @@ import {
   FormControl,
   FormLabel,
   Spinner,
+  Input,
+  Switch,
 } from "@chakra-ui/react";
 import { AddIcon, MinusIcon } from "@chakra-ui/icons";
 import GridOnIcon from "@mui/icons-material/GridOn";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SettingsIcon from "@mui/icons-material/Settings";
 import DirectionsWalkIcon from "@mui/icons-material/DirectionsWalk";
+import ImageIcon from "@mui/icons-material/Image";
 import { parseFilename } from "../generics/parseFilename";
 import {
   loadBattleMapFromStorage,
@@ -56,7 +59,8 @@ interface BattleMapProps {
   droppedImages: ImageFile[];
   onBattleMapUpdate?: (
     tokens: GridToken[],
-    gridSize: number,
+    gridWidth: number,
+    gridHeight: number,
     showGrid: boolean,
     zoomLevel?: number,
     focusedTile?: { x: number; y: number },
@@ -65,7 +69,8 @@ interface BattleMapProps {
     movementRange?: number
   ) => void;
   tokens?: GridToken[];
-  gridSize?: number;
+  gridWidth?: number;
+  gridHeight?: number;
   showGrid?: boolean;
   isDisplayMode?: boolean;
   zoomLevel?: number;
@@ -128,9 +133,19 @@ const GridCell: React.FC<GridCellProps> = ({
           : { bg: isInMovementRange ? "green.300" : "gray.700" }
       }
       transition="all 0.2s ease"
+      zIndex="2" // Ensure grid cells appear above the background
+      overflow="hidden" // Prevent content from expanding the cell
     >
       {token && (
-        <Box position="relative" width="100%" height="100%">
+        <Box
+          position="absolute"
+          top="0"
+          left="0"
+          width="100%"
+          height="100%"
+          zIndex="3"
+          overflow="hidden"
+        >
           <Image
             src={token.imageFile.src}
             alt={parseFilename(token.imageFile.file.name)}
@@ -139,6 +154,9 @@ const GridCell: React.FC<GridCellProps> = ({
             objectFit="cover"
             draggable={false}
             pointerEvents="none"
+            position="absolute"
+            top="0"
+            left="0"
           />
         </Box>
       )}
@@ -150,7 +168,8 @@ const BattleMap: React.FC<BattleMapProps> = ({
   droppedImages,
   onBattleMapUpdate,
   tokens = [],
-  gridSize = 20,
+  gridWidth = 20,
+  gridHeight = 20,
   showGrid = false, // Default to hidden
   isDisplayMode = false,
   zoomLevel = 1.0,
@@ -166,9 +185,13 @@ const BattleMap: React.FC<BattleMapProps> = ({
     x: number;
     y: number;
   } | null>(null);
-  const [localGridSize, setLocalGridSize] = useState(gridSize);
+  const [localGridWidth, setLocalGridWidth] = useState(gridWidth);
+  const [localGridHeight, setLocalGridHeight] = useState(gridHeight);
   const [localShowGrid, setLocalShowGrid] = useState(showGrid);
   const [localZoomLevel, setLocalZoomLevel] = useState(zoomLevel);
+  const [backgroundImage, setBackgroundImage] = useState<string | undefined>(
+    undefined
+  );
   const [isLoaded, setIsLoaded] = useState(false);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -203,15 +226,16 @@ const BattleMap: React.FC<BattleMapProps> = ({
     const initializeComponent = async () => {
       if (tokens.length > 0) {
         setLocalTokens(tokens);
-        setLocalGridSize(gridSize);
+        setLocalGridWidth(gridWidth);
+        setLocalGridHeight(gridHeight);
         setLocalShowGrid(showGrid);
       } else {
         const storedData = loadBattleMapFromStorage();
-        // For now, we'll start with empty tokens if loading from storage
-        // since we can't properly recreate File objects from localStorage
         setLocalTokens([]);
-        setLocalGridSize(storedData.gridSize);
+        setLocalGridWidth(storedData.gridWidth);
+        setLocalGridHeight(storedData.gridHeight);
         setLocalShowGrid(storedData.showGrid);
+        setBackgroundImage(storedData.backgroundImage);
       }
       setIsLoaded(true);
     };
@@ -228,9 +252,15 @@ const BattleMap: React.FC<BattleMapProps> = ({
 
   useEffect(() => {
     if (isLoaded) {
-      setLocalGridSize(gridSize);
+      setLocalGridWidth(gridWidth);
     }
-  }, [gridSize, isLoaded]);
+  }, [gridWidth, isLoaded]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      setLocalGridHeight(gridHeight);
+    }
+  }, [gridHeight, isLoaded]);
 
   useEffect(() => {
     if (isLoaded) {
@@ -278,7 +308,8 @@ const BattleMap: React.FC<BattleMapProps> = ({
 
     onBattleMapUpdate?.(
       localTokens,
-      localGridSize,
+      localGridWidth,
+      localGridHeight,
       localShowGrid,
       localZoomLevel,
       focusedTile,
@@ -293,7 +324,8 @@ const BattleMap: React.FC<BattleMapProps> = ({
     isLoaded,
     onBattleMapUpdate,
     localTokens,
-    localGridSize,
+    localGridWidth,
+    localGridHeight,
     localShowGrid,
     localZoomLevel,
     focusedTile,
@@ -316,18 +348,27 @@ const BattleMap: React.FC<BattleMapProps> = ({
 
       const battleMapData = {
         tokens: storageTokens,
-        gridSize: localGridSize,
+        gridWidth: localGridWidth,
+        gridHeight: localGridHeight,
         showGrid: localShowGrid,
+        backgroundImage: backgroundImage,
       };
 
       // Only save to storage if we have valid data
-      if (storageTokens.length > 0 || localGridSize !== 20 || !localShowGrid) {
+      if (
+        storageTokens.length > 0 ||
+        localGridWidth !== 20 ||
+        localGridHeight !== 20 ||
+        !localShowGrid ||
+        backgroundImage
+      ) {
         saveBattleMapToStorage(battleMapData);
       }
 
       onBattleMapUpdate?.(
         newTokens,
-        localGridSize,
+        localGridWidth,
+        localGridHeight,
         localShowGrid,
         localZoomLevel,
         focusedTile,
@@ -338,7 +379,8 @@ const BattleMap: React.FC<BattleMapProps> = ({
     },
     [
       onBattleMapUpdate,
-      localGridSize,
+      localGridWidth,
+      localGridHeight,
       localShowGrid,
       localZoomLevel,
       focusedTile,
@@ -346,12 +388,14 @@ const BattleMap: React.FC<BattleMapProps> = ({
       isInMoveMode,
       movementRange,
       isLoaded,
+      backgroundImage,
     ]
   );
 
   const handleSettingsChange = useCallback(
-    (newGridSize: number, newShowGrid: boolean) => {
-      setLocalGridSize(newGridSize);
+    (newGridWidth: number, newGridHeight: number, newShowGrid: boolean) => {
+      setLocalGridWidth(newGridWidth);
+      setLocalGridHeight(newGridHeight);
       setLocalShowGrid(newShowGrid);
 
       // Update storage and notify parent
@@ -364,14 +408,17 @@ const BattleMap: React.FC<BattleMapProps> = ({
 
       const battleMapData = {
         tokens: storageTokens,
-        gridSize: newGridSize,
+        gridWidth: newGridWidth,
+        gridHeight: newGridHeight,
         showGrid: newShowGrid,
+        backgroundImage: backgroundImage,
       };
 
       saveBattleMapToStorage(battleMapData);
       onBattleMapUpdate?.(
         localTokens,
-        newGridSize,
+        newGridWidth,
+        newGridHeight,
         newShowGrid,
         localZoomLevel,
         focusedTile,
@@ -388,16 +435,93 @@ const BattleMap: React.FC<BattleMapProps> = ({
       selectedToken,
       isInMoveMode,
       movementRange,
+      backgroundImage,
     ]
   );
 
   const applySettings = () => {
-    handleSettingsChange(localGridSize, localShowGrid);
+    handleSettingsChange(localGridWidth, localGridHeight, localShowGrid);
     onSettingsClose();
 
     toast({
       title: "Grid size updated",
       status: "success",
+      duration: 2000,
+      isClosable: true,
+    });
+  };
+
+  const handleBackgroundImageUpload = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setBackgroundImage(base64String);
+
+        // Update storage immediately
+        const storageTokens = localTokens.map((token) => ({
+          id: token.id,
+          gridX: token.gridX,
+          gridY: token.gridY,
+          imageName: token.imageFile.file.name,
+        }));
+
+        const battleMapData = {
+          tokens: storageTokens,
+          gridWidth: localGridWidth,
+          gridHeight: localGridHeight,
+          showGrid: localShowGrid,
+          backgroundImage: base64String,
+        };
+
+        saveBattleMapToStorage(battleMapData);
+
+        toast({
+          title: "Background image uploaded",
+          status: "success",
+          duration: 2000,
+          isClosable: true,
+        });
+      };
+      reader.readAsDataURL(file);
+    } else {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a valid image file",
+        status: "error",
+        duration: 2000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const removeBackgroundImage = () => {
+    setBackgroundImage(undefined);
+
+    // Update storage
+    const storageTokens = localTokens.map((token) => ({
+      id: token.id,
+      gridX: token.gridX,
+      gridY: token.gridY,
+      imageName: token.imageFile.file.name,
+    }));
+
+    const battleMapData = {
+      tokens: storageTokens,
+      gridWidth: localGridWidth,
+      gridHeight: localGridHeight,
+      showGrid: localShowGrid,
+      backgroundImage: undefined,
+    };
+
+    saveBattleMapToStorage(battleMapData);
+
+    toast({
+      title: "Background image removed",
+      status: "info",
       duration: 2000,
       isClosable: true,
     });
@@ -534,8 +658,8 @@ const BattleMap: React.FC<BattleMapProps> = ({
     const cells = [];
     const selectedTokenPos = getSelectedTokenPosition();
 
-    for (let y = 0; y < localGridSize; y++) {
-      for (let x = 0; x < localGridSize; x++) {
+    for (let y = 0; y < localGridHeight; y++) {
+      for (let x = 0; x < localGridWidth; x++) {
         const token = localTokens.find((t) => t.gridX === x && t.gridY === y);
         const isSelected = selectedToken === token?.id;
         const isFocused = focusedTile?.x === x && focusedTile?.y === y;
@@ -572,33 +696,6 @@ const BattleMap: React.FC<BattleMapProps> = ({
     return cells;
   };
 
-  // Send movement state updates immediately to popup
-  useEffect(() => {
-    if (!isLoaded) return;
-
-    onBattleMapUpdate?.(
-      localTokens,
-      localGridSize,
-      localShowGrid,
-      localZoomLevel,
-      focusedTile,
-      selectedToken,
-      isInMoveMode,
-      movementRange
-    );
-  }, [
-    selectedToken,
-    isInMoveMode,
-    movementRange,
-    isLoaded,
-    onBattleMapUpdate,
-    localTokens,
-    localGridSize,
-    localShowGrid,
-    localZoomLevel,
-    focusedTile,
-  ]);
-
   // Show loading state until component is fully initialized
   if (!isLoaded) {
     return (
@@ -629,7 +726,7 @@ const BattleMap: React.FC<BattleMapProps> = ({
               />
             </Tooltip>
             <Text fontSize="lg" fontWeight="bold">
-              Battle Map ({localGridSize}x{localGridSize})
+              Battle Map ({localGridWidth}x{localGridHeight})
             </Text>
           </HStack>
           <HStack spacing={4}>
@@ -682,7 +779,11 @@ const BattleMap: React.FC<BattleMapProps> = ({
                 leftIcon={<GridOnIcon />}
                 onClick={() => {
                   const newShowBattleMap = !localShowGrid;
-                  handleSettingsChange(localGridSize, newShowBattleMap);
+                  handleSettingsChange(
+                    localGridWidth,
+                    localGridHeight,
+                    newShowBattleMap
+                  );
                 }}
                 colorScheme={localShowGrid ? "orange" : "blue"}
                 size="sm"
@@ -698,6 +799,32 @@ const BattleMap: React.FC<BattleMapProps> = ({
               >
                 Clear All
               </Button>
+              <Button
+                leftIcon={<ImageIcon />}
+                onClick={() => {
+                  const fileInput = document.createElement("input");
+                  fileInput.type = "file";
+                  fileInput.accept = "image/*";
+                  fileInput.onchange = (e) =>
+                    handleBackgroundImageUpload(e as any);
+                  fileInput.click();
+                }}
+                colorScheme={backgroundImage ? "green" : "gray"}
+                size="sm"
+              >
+                {backgroundImage ? "Change BG" : "Upload BG"}
+              </Button>
+              {backgroundImage && (
+                <Button
+                  leftIcon={<DeleteIcon />}
+                  onClick={removeBackgroundImage}
+                  colorScheme="red"
+                  variant="outline"
+                  size="sm"
+                >
+                  Remove BG
+                </Button>
+              )}
             </HStack>
           </HStack>
         </HStack>
@@ -713,14 +840,37 @@ const BattleMap: React.FC<BattleMapProps> = ({
         p={2}
       >
         <Grid
-          templateColumns={`repeat(${localGridSize}, 1fr)`}
-          templateRows={`repeat(${localGridSize}, 1fr)`}
+          templateColumns={`repeat(${localGridWidth}, 1fr)`}
+          templateRows={`repeat(${localGridHeight}, 1fr)`}
           gap={0}
-          width={`${localGridSize * 40}px`}
-          height={`${localGridSize * 40}px`}
+          width={`${localGridWidth * 40}px`}
+          height={`${localGridHeight * 40}px`}
           minWidth="100%"
           minHeight="100%"
+          position="relative"
         >
+          {/* Background image positioned to exactly fit the grid */}
+          {backgroundImage && (
+            <Box
+              position="absolute"
+              top="0"
+              left="0"
+              width="100%"
+              height="100%"
+              zIndex="1"
+            >
+              <Image
+                src={backgroundImage}
+                alt="Battle map background"
+                width="100%"
+                height="100%"
+                objectFit="fill" // Force the image to exactly fit the grid dimensions
+                style={{
+                  imageRendering: "auto", // Ensure smooth scaling
+                }}
+              />
+            </Box>
+          )}
           {renderGrid()}
         </Grid>
       </Box>
@@ -904,11 +1054,11 @@ const BattleMap: React.FC<BattleMapProps> = ({
           <ModalBody>
             <VStack spacing={4}>
               <FormControl>
-                <FormLabel>Grid Size</FormLabel>
+                <FormLabel>Grid Width</FormLabel>
                 <NumberInput
-                  value={localGridSize}
+                  value={localGridWidth}
                   onChange={(valueString) =>
-                    setLocalGridSize(parseInt(valueString) || 20)
+                    setLocalGridWidth(parseInt(valueString) || 20)
                   }
                   min={5}
                   max={50}
@@ -919,6 +1069,65 @@ const BattleMap: React.FC<BattleMapProps> = ({
                     <NumberDecrementStepper />
                   </NumberInputStepper>
                 </NumberInput>
+              </FormControl>
+              <FormControl>
+                <FormLabel>Grid Height</FormLabel>
+                <NumberInput
+                  value={localGridHeight}
+                  onChange={(valueString) =>
+                    setLocalGridHeight(parseInt(valueString) || 20)
+                  }
+                  min={5}
+                  max={50}
+                >
+                  <NumberInputField />
+                  <NumberInputStepper>
+                    <NumberIncrementStepper />
+                    <NumberDecrementStepper />
+                  </NumberInputStepper>
+                </NumberInput>
+              </FormControl>
+              <FormControl>
+                <FormLabel>Background Image</FormLabel>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBackgroundImageUpload}
+                />
+                {backgroundImage && (
+                  <HStack spacing={2} mt={2}>
+                    <Button
+                      size="sm"
+                      colorScheme="red"
+                      onClick={removeBackgroundImage}
+                    >
+                      Remove Background Image
+                    </Button>
+                    <Button
+                      size="sm"
+                      colorScheme="blue"
+                      onClick={() => {
+                        // Open the image in a new tab
+                        const newTab = window.open();
+                        if (newTab) {
+                          newTab.close(); // Close the empty tab
+                          setTimeout(() => {
+                            newTab.location.href = backgroundImage;
+                          }, 100);
+                        }
+                      }}
+                    >
+                      View Background Image
+                    </Button>
+                  </HStack>
+                )}
+              </FormControl>
+              <FormControl>
+                <FormLabel>Show Grid</FormLabel>
+                <Switch
+                  isChecked={localShowGrid}
+                  onChange={(e) => setLocalShowGrid(e.target.checked)}
+                />
               </FormControl>
             </VStack>
           </ModalBody>

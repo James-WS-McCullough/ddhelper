@@ -26,8 +26,8 @@ const PopupBattleMap: React.FC<PopupBattleMapProps> = ({
   const tileSize = Math.max(30, Math.min(120, baseTileSize * zoomLevel));
 
   // Calculate grid dimensions
-  const gridWidth = tileSize * battleMapData.gridSize;
-  const gridHeight = tileSize * battleMapData.gridSize;
+  const gridWidth = tileSize * battleMapData.gridWidth;
+  const gridHeight = tileSize * battleMapData.gridHeight;
 
   // Helper function to calculate if a tile is within movement range
   const isWithinMovementRange = (
@@ -135,19 +135,41 @@ const PopupBattleMap: React.FC<PopupBattleMapProps> = ({
         {/* Battle map display with proper grid positioning */}
         <Box
           display="grid"
-          gridTemplateColumns={`repeat(${battleMapData.gridSize}, ${tileSize}px)`}
-          gridTemplateRows={`repeat(${battleMapData.gridSize}, ${tileSize}px)`}
+          gridTemplateColumns={`repeat(${battleMapData.gridWidth}, ${tileSize}px)`}
+          gridTemplateRows={`repeat(${battleMapData.gridHeight}, ${tileSize}px)`}
           width={`${gridWidth}px`}
           height={`${gridHeight}px`}
           position="relative"
           gap="1px"
         >
+          {/* Background image positioned to exactly fit the grid */}
+          {battleMapData.backgroundImage && (
+            <Box
+              position="absolute"
+              top="0"
+              left="0"
+              width="100%"
+              height="100%"
+              zIndex="1"
+            >
+              <Image
+                src={battleMapData.backgroundImage}
+                alt="Battle map background"
+                width="100%"
+                height="100%"
+                objectFit="fill" // Force the image to exactly fit the grid dimensions
+                style={{
+                  imageRendering: "auto", // Ensure smooth scaling
+                }}
+              />
+            </Box>
+          )}
           {/* Grid cells */}
           {Array.from({
-            length: battleMapData.gridSize * battleMapData.gridSize,
+            length: battleMapData.gridWidth * battleMapData.gridHeight,
           }).map((_, index) => {
-            const x = index % battleMapData.gridSize;
-            const y = Math.floor(index / battleMapData.gridSize);
+            const x = index % battleMapData.gridWidth;
+            const y = Math.floor(index / battleMapData.gridWidth);
             const token = battleMapData.tokens.find(
               (t) => t.gridX === x && t.gridY === y
             );
@@ -193,6 +215,7 @@ const PopupBattleMap: React.FC<PopupBattleMapProps> = ({
                 width={`${tileSize}px`}
                 height={`${tileSize}px`}
                 transition="all 0.2s ease"
+                zIndex="2" // Ensure grid cells appear above the background
               >
                 {token && (
                   <Box
@@ -206,7 +229,7 @@ const PopupBattleMap: React.FC<PopupBattleMapProps> = ({
                     overflow="hidden"
                     border={`${Math.max(2, tileSize * 0.05)}px solid white`}
                     boxShadow="0 0 10px rgba(0,0,0,0.5)"
-                    zIndex="20"
+                    zIndex="3" // Ensure tokens appear above grid cells and background
                     transition="all 0.2s ease"
                     _hover={{
                       transform: "translate(-50%, -50%) scale(1.05)",
